@@ -737,8 +737,10 @@ function drawProduto(list, periodo, q){
 
   groups = Object.values(g).sort((a,b)=>b.liq - a.liq);
 
-  const totQ  = groups.reduce((a,x)=>a+x.qtd,0);
-  const totL  = groups.reduce((a,x)=>a+x.liq,0);
+  const totQ   = groups.reduce((a,x)=>a+x.qtd, 0);
+  const totLiq = groups.reduce((a,x)=>a+x.liq, 0);
+  const totNFs = list.reduce((a,n)=>a+n.v, 0);        /* MESMO valor do modo fornecedor */
+  const ajuste = totNFs - totLiq;                     /* IPI + frete − descontos         */
   const nForns = new Set(list.filter(n=>usedNFs.has(n.key)).map(n=>n.f)).size;
 
   $('thead').innerHTML =
@@ -749,11 +751,13 @@ function drawProduto(list, periodo, q){
     ['Produtos', groups.length],
     ['Fornecedores', nForns],
     ['Notas', usedNFs.size],
-    ['Total dos produtos', R(totL)]
+    ['Total das NFs', R(totNFs)],
+    ['Total dos produtos (líquido)', R(totLiq)],
+    ['Ajustes (IPI / frete / desc.)', R(ajuste)]
   ].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
 
   const ph = $('phMeta');
-  if(ph) ph.textContent = `Agrupado por produto · Período: ${periodo} · ${groups.length} produto(s) · ${usedNFs.size} nota(s) · Total líquido ${R(totL)} · Impresso em ${new Date().toLocaleString('pt-BR')}`;
+  if(ph) ph.textContent = `Agrupado por produto · Período: ${periodo} · ${groups.length} produto(s) · ${usedNFs.size} nota(s) · Total das NFs ${R(totNFs)} · Impresso em ${new Date().toLocaleString('pt-BR')}`;
 
   let h = '';
   groups.forEach((o,i)=>{
@@ -796,7 +800,17 @@ function drawProduto(list, periodo, q){
   });
 
   $('tb').innerHTML = h || '<tr><td colspan="3" style="color:#8a94a3">Nenhum produto nesse período.</td></tr>';
-  $('tf').innerHTML = `<tr><td>TOTAL</td><td class="n">${N3(totQ)}</td><td class="n">${R(totL)}</td></tr>`;
+
+  /* ---- Rodapé com reconciliação: produtos + ajustes = Total das NFs ---- */
+  $('tf').innerHTML = `<tr><td colspan="3" style="border:0;padding:0">
+    <div class="sum" style="margin:10px 0 10px auto">
+      <div><span>Total dos produtos (soma das linhas)</span><b>${R(totLiq)}</b></div>
+      ${Math.abs(ajuste) > 0.01
+        ? `<div><span>+ Ajustes (IPI / frete / descontos da nota)</span><b>${R(ajuste)}</b></div>`
+        : ''}
+      <div class="tt"><span>= Total das NFs (${usedNFs.size} nota${usedNFs.size>1?'s':''})</span><b>${R(totNFs)}</b></div>
+    </div>
+  </td></tr>`;
 }
 
 /* =================== FETCH =================== */
@@ -857,12 +871,12 @@ function printMode(pmode){
 
   if(pmode === 'summary'){
     open.clear(); openNF.clear();
+    draw();
+    setTimeout(()=>window.print(), 80);
   } else {
     expandAll();
-    return; // expandAll() já chamou draw()
+    setTimeout(()=>window.print(), 80);
   }
-  draw();
-  setTimeout(()=>window.print(), 80);
 }
 
 /* ---------- Eventos ---------- */
@@ -884,7 +898,7 @@ $('tb').onclick = e => {
   }
   if(e.target.closest('tr.it') || e.target.closest('tr.rs') || e.target.closest('tr.sub')) return;
 
-  // NF detalhada dentro de fornecedor
+  /* NF detalhada dentro de fornecedor */
   const rn = e.target.closest('tr.d[data-n]');
   if(rn){
     const n = nfs[rn.dataset.n];
@@ -892,7 +906,7 @@ $('tb').onclick = e => {
     draw(); return;
   }
 
-  // Linha de grupo (fornecedor OU produto)
+  /* Linha de grupo (fornecedor OU produto) */
   const r = e.target.closest('tr.f');
   if(!r) return;
   const item = groups[r.dataset.i];
