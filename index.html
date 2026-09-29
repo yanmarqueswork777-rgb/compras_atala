@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Total por Fornecedor</title>
+<title>Total por Fornecedor / Produto</title>
 <style>
 :root{
   --bg:#0f1217; --bg2:#181d25; --bg3:#1d232d; --bg4:#141922;
@@ -38,6 +38,7 @@ h1{font-size:20px;margin:0 0 4px;line-height:1.2}
 
 .r{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
 .r + .r{margin-top:8px}
+.r.middle{align-items:center}
 
 label{
   display:flex; flex-direction:column; gap:4px;
@@ -65,6 +66,11 @@ button.s{
 }
 button.s.on{background:var(--accent);color:var(--accent-t);font-weight:700}
 
+.seg-label{
+  color:var(--muted);font-size:12px;align-self:center;
+  margin-right:4px;font-weight:600;
+}
+
 .k{
   display:grid; gap:8px; margin-bottom:12px;
   grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
@@ -90,7 +96,7 @@ button.s.on{background:var(--accent);color:var(--accent-t);font-weight:700}
   font-weight:700;border-top:2px solid var(--accent);border-bottom:0;
 }
 
-/* Linha fornecedor */
+/* Linha grupo (fornecedor OU produto) */
 tr.f{cursor:pointer}
 tr.f:hover td{background:#1b212b}
 tr.f td:first-child{
@@ -106,16 +112,23 @@ tr.f td:first-child .fname{word-break:break-word;min-width:0}
   flex:0 0 auto;
 }
 .a{display:inline-block;width:14px;color:var(--accent);flex:0 0 auto}
+.gr-tag{color:var(--muted);font-size:11.5px;font-style:italic}
 
-/* Linha NF */
-tr.d{cursor:pointer}
-tr.d:hover td{background:#1a2130}
+/* Linha NF (fornecedor) e linha NF-do-produto */
 tr.d td{
   background:var(--bg4);font-size:13px;color:#c5ccd6;
   white-space:normal;line-height:1.45;
 }
+tr.d[data-n]{cursor:pointer}
+tr.d[data-n]:hover td{background:#1a2130}
 
-/* Linha resumo */
+/* Subtotal por produto */
+tr.sub td{
+  background:#0d1219;font-size:13px;color:#9db4d6;font-weight:700;
+  white-space:normal;border-top:1px dashed var(--accent);
+}
+
+/* Linha resumo NF */
 tr.rs > td{
   background:#0f141b;padding:4px 12px 10px 32px;white-space:normal;
 }
@@ -322,11 +335,13 @@ table.ii tfoot td{
   tr.f{cursor:default}
   tr.f td{background:#fff !important;color:#000 !important}
   tr.d td{background:#f7f7f7 !important;color:#000 !important;font-size:9.5px;padding-left:20px !important}
+  tr.sub td{background:#eee !important;color:#000 !important;border-top:1px solid #000 !important}
   tr.rs > td{background:#fafafa !important;padding:2px 6px 6px 20px !important}
   tr.it > td{background:#fafafa !important;padding:4px 6px 8px 20px !important}
-  tr.f,tr.d,tr.rs,tr.it{page-break-inside:avoid;break-inside:avoid}
+  tr.f,tr.d,tr.rs,tr.it,tr.sub{page-break-inside:avoid;break-inside:avoid}
 
   .cf{background:#eee !important;color:#000 !important;border:1px solid #ccc !important}
+  .gr-tag{color:#444 !important}
 
   .items{overflow:visible !important;border:1px solid #ccc !important;background:#fff !important}
   table.ii{min-width:0 !important;width:100% !important;font-size:9px !important;display:table !important}
@@ -368,15 +383,22 @@ table.ii tfoot td{
 <div class="box">
 
   <div id="printHeader">
-    <h1>Total das notas por fornecedor</h1>
+    <h1 id="phTitle">Total das notas por fornecedor</h1>
     <div class="meta" id="phMeta"></div>
   </div>
 
-  <h1 class="no-print">Total das notas por fornecedor</h1>
+  <h1 class="no-print">Total das notas por fornecedor / produto</h1>
   <div class="sub no-print">Dados do Google Sheets · filtro pela <b>Data de Entrada no Sistema</b></div>
 
   <div class="card no-print">
     <h2>Filtro por data de entrada</h2>
+
+    <div class="r middle">
+      <span class="seg-label">Agrupar por:</span>
+      <button class="s on" data-g="fornecedor">Fornecedor</button>
+      <button class="s" data-g="produto">Produto</button>
+    </div>
+
     <div class="r">
       <button class="s" data-p="hoje">Hoje</button>
       <button class="s" data-p="7">7 dias</button>
@@ -385,10 +407,11 @@ table.ii tfoot td{
       <button class="s" data-p="mesant">Mês anterior</button>
       <button class="s" data-p="tudo">Tudo</button>
     </div>
+
     <div class="r">
       <label>Entrada de<input type="date" id="d1"></label>
       <label>Entrada até<input type="date" id="d2"></label>
-      <label class="wide" style="flex:1;min-width:200px">Fornecedor ou NF<input id="q" placeholder="Filtrar..."></label>
+      <label class="wide" style="flex:1;min-width:200px">Fornecedor, NF ou produto<input id="q" placeholder="Filtrar..."></label>
       <button id="rf">↻ Atualizar</button>
     </div>
   </div>
@@ -398,9 +421,7 @@ table.ii tfoot td{
 
   <div class="card w" style="padding:0">
     <table class="tbl-main">
-      <thead>
-        <tr><th>Fornecedor</th><th class="n">Notas</th><th class="n">Total das NFs</th></tr>
-      </thead>
+      <thead id="thead"></thead>
       <tbody id="tb"></tbody>
       <tfoot id="tf"></tfoot>
     </table>
@@ -420,7 +441,8 @@ table.ii tfoot td{
 <script>
 /* ====== CONFIG ====== */
 const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4EIhTGYnvS8KrgGfYr0ujcE1XmFr2yVC_gPuzJSqIsEcusoCoaYR2BHrkBT8dJAketaDTFf6vGzI3/pub?output=csv';
-const DEFAULT_PRESET='30'; // hoje | 7 | 30 | mes | mesant | tudo
+const DEFAULT_PRESET='30';      // hoje | 7 | 30 | mes | mesant | tudo
+const DEFAULT_GROUP ='fornecedor'; // fornecedor | produto
 /* ==================== */
 
 const $ = i => document.getElementById(i);
@@ -460,6 +482,7 @@ function parseCSV(t){
 }
 
 let nfs=[], groups=[];
+let groupMode = DEFAULT_GROUP;
 const open=new Set(), openNF=new Set();
 
 function build(rows){
@@ -497,7 +520,7 @@ function build(rows){
     const ch = g('ch');
     const o = {
       key,
-      cf: g('cf'),          // <-- código do fornecedor na NF
+      cf: g('cf'),
       f:  g('f'),
       ped:g('ped'), nf:g('nf'), s:g('s'), em:g('em'),
       en:g('en'), eni:iso(g('en')), v:num(g('v')), dn:num(g('dnf')),
@@ -597,10 +620,10 @@ function preset(p){
   draw();
 }
 
+/* =================== DRAW =================== */
 function draw(){
-  const q  = $('q').value.toLowerCase();
+  const q  = $('q').value.trim().toLowerCase();
   const d1 = $('d1').value, d2 = $('d2').value;
-  const g = {};
 
   const list = nfs.filter(n =>
     (!d1 || n.eni >= d1) &&
@@ -610,6 +633,21 @@ function draw(){
            n.it.some(x => x.desc.toLowerCase().includes(q) || x.cod.toLowerCase() === q))
   );
 
+  const periodo = (d1||d2) ? `${fmtIso(d1)||'início'} a ${fmtIso(d2)||'hoje'}` : 'Todo o período';
+  const phTitle = $('phTitle');
+
+  if(groupMode === 'produto'){
+    if(phTitle) phTitle.textContent = 'Total por produto';
+    drawProduto(list, periodo, q);
+  } else {
+    if(phTitle) phTitle.textContent = 'Total das notas por fornecedor';
+    drawFornecedor(list, periodo);
+  }
+}
+
+/* -------- Modo FORNECEDOR -------- */
+function drawFornecedor(list, periodo){
+  const g = {};
   list.forEach(n=>{
     let o = g[n.f];
     if(!o) o = g[n.f] = {f:n.f, cf:'', c:0, v:0, l:[]};
@@ -617,9 +655,10 @@ function draw(){
     o.c++; o.v += n.v; o.l.push(n);
   });
   groups = Object.values(g).sort((a,b)=>b.v - a.v);
-
   const tot = groups.reduce((a,x)=>a+x.v, 0);
-  const periodo = (d1||d2) ? `${fmtIso(d1)||'início'} a ${fmtIso(d2)||'hoje'}` : 'Todo o período';
+
+  $('thead').innerHTML =
+    '<tr><th>Fornecedor</th><th class="n">Notas</th><th class="n">Total das NFs</th></tr>';
 
   $('k').innerHTML = [
     ['Período (entrada)', periodo],
@@ -629,7 +668,7 @@ function draw(){
   ].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
 
   const ph = $('phMeta');
-  if(ph) ph.textContent = `Período: ${periodo} · ${groups.length} fornecedor(es) · ${list.length} nota(s) · Total ${R(tot)} · Impresso em ${new Date().toLocaleString('pt-BR')}`;
+  if(ph) ph.textContent = `Agrupado por fornecedor · Período: ${periodo} · ${groups.length} fornecedor(es) · ${list.length} nota(s) · Total ${R(tot)} · Impresso em ${new Date().toLocaleString('pt-BR')}`;
 
   let h = '';
   groups.forEach((o,i)=>{
@@ -670,6 +709,97 @@ function draw(){
   $('tf').innerHTML = `<tr><td>TOTAL</td><td class="n">${list.length}</td><td class="n">${R(tot)}</td></tr>`;
 }
 
+/* -------- Modo PRODUTO -------- */
+function drawProduto(list, periodo, q){
+  const g = {};
+  const usedNFs = new Set();
+
+  list.forEach(n=>{
+    n.it.forEach(it=>{
+      if(q && !it.desc.toLowerCase().includes(q) && it.cod.toLowerCase() !== q) return;
+      usedNFs.add(n.key);
+      const key = it.cod || it.desc;
+      let o = g[key];
+      if(!o) o = g[key] = {
+        cod:it.cod, desc:it.desc, un:it.un, gr:it.gr,
+        qtd:0, vt:0, liq:0, icms:0, ipi:0, fr:0, dc:0, nfs:[]
+      };
+      o.qtd += it.qtd;
+      o.vt  += it.vt;
+      o.liq += it.liq;
+      o.icms+= it.icms;
+      o.ipi += it.ipi;
+      o.fr  += it.fr;
+      o.dc  += it.dc;
+      o.nfs.push({n, it});
+    });
+  });
+
+  groups = Object.values(g).sort((a,b)=>b.liq - a.liq);
+
+  const totQ  = groups.reduce((a,x)=>a+x.qtd,0);
+  const totL  = groups.reduce((a,x)=>a+x.liq,0);
+  const nForns = new Set(list.filter(n=>usedNFs.has(n.key)).map(n=>n.f)).size;
+
+  $('thead').innerHTML =
+    '<tr><th>Produto</th><th class="n">Qtd total</th><th class="n">Valor líquido</th></tr>';
+
+  $('k').innerHTML = [
+    ['Período (entrada)', periodo],
+    ['Produtos', groups.length],
+    ['Fornecedores', nForns],
+    ['Notas', usedNFs.size],
+    ['Total dos produtos', R(totL)]
+  ].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
+
+  const ph = $('phMeta');
+  if(ph) ph.textContent = `Agrupado por produto · Período: ${periodo} · ${groups.length} produto(s) · ${usedNFs.size} nota(s) · Total líquido ${R(totL)} · Impresso em ${new Date().toLocaleString('pt-BR')}`;
+
+  let h = '';
+  groups.forEach((o,i)=>{
+    const key = 'p:' + (o.cod || o.desc);
+    const op = open.has(key);
+    h += `<tr class="f" data-i="${i}">
+      <td>
+        <span class="a">${op?'▼':'▶'}</span>
+        ${o.cod ? `<span class="cf">${esc(o.cod)}</span>` : ''}
+        <span class="fname">${esc(o.desc)}</span>
+        ${o.gr ? `<span class="gr-tag">· ${esc(o.gr)}</span>` : ''}
+      </td>
+      <td class="n">${N3(o.qtd)}${o.un?' '+esc(o.un):''}</td>
+      <td class="n">${R(o.liq)}</td>
+    </tr>`;
+
+    if(op){
+      o.nfs.slice()
+        .sort((a,b)=> b.n.eni.localeCompare(a.n.eni) || b.it.liq - a.it.liq)
+        .forEach(({n, it})=>{
+          h += `<tr class="d">
+            <td>
+              <span class="a">·</span>
+              ${n.cf ? `<span class="cf">${esc(n.cf)}</span> ` : ''}${esc(n.f)}
+              &middot; NF ${esc(n.nf)}${n.s?'/'+esc(n.s):''}
+              &middot; Pedido ${esc(n.ped)}
+              &middot; <b>Entrada ${esc(n.en)}</b>
+            </td>
+            <td class="n">${N3(it.qtd)}${it.un?' '+esc(it.un):''}</td>
+            <td class="n">${R(it.liq)}</td>
+          </tr>`;
+        });
+
+      h += `<tr class="sub">
+        <td><span class="a"></span>Subtotal · ${o.nfs.length} nota${o.nfs.length>1?'s':''}</td>
+        <td class="n">${N3(o.qtd)}${o.un?' '+esc(o.un):''}</td>
+        <td class="n">${R(o.liq)}</td>
+      </tr>`;
+    }
+  });
+
+  $('tb').innerHTML = h || '<tr><td colspan="3" style="color:#8a94a3">Nenhum produto nesse período.</td></tr>';
+  $('tf').innerHTML = `<tr><td>TOTAL</td><td class="n">${N3(totQ)}</td><td class="n">${R(totL)}</td></tr>`;
+}
+
+/* =================== FETCH =================== */
 async function getCSV(){
   const u = CSV_URL + (CSV_URL.includes('?') ? '&' : '?') + '_=' + Date.now();
   try{
@@ -695,8 +825,24 @@ async function load(){
   }
 }
 
+/* ---------- Expansão em lote ---------- */
+function expandAll(){
+  if(groupMode === 'produto'){
+    groups.forEach(g => open.add('p:' + (g.cod || g.desc)));
+  } else {
+    groups.forEach(g => {
+      open.add(g.f);
+      g.l.forEach(n => openNF.add(n.key));
+    });
+  }
+  draw();
+}
+function collapseAll(){
+  open.clear(); openNF.clear(); draw();
+}
+
 /* ---------- Impressão ---------- */
-function printMode(mode){
+function printMode(pmode){
   const savedOpen   = new Set(open);
   const savedOpenNF = new Set(openNF);
 
@@ -707,16 +853,13 @@ function printMode(mode){
     window.removeEventListener('afterprint', restore);
   };
   window.addEventListener('afterprint', restore);
-  setTimeout(restore, 60000);
+  setTimeout(restore, 60000); // fallback
 
-  if(mode === 'summary'){
-    open.clear();
-    openNF.clear();
+  if(pmode === 'summary'){
+    open.clear(); openNF.clear();
   } else {
-    groups.forEach(g=>{
-      open.add(g.f);
-      g.l.forEach(n=>openNF.add(n.key));
-    });
+    expandAll();
+    return; // expandAll() já chamou draw()
   }
   draw();
   setTimeout(()=>window.print(), 80);
@@ -739,18 +882,25 @@ $('tb').onclick = e => {
     });
     return;
   }
-  if(e.target.closest('tr.it') || e.target.closest('tr.rs')) return;
+  if(e.target.closest('tr.it') || e.target.closest('tr.rs') || e.target.closest('tr.sub')) return;
 
-  const rn = e.target.closest('tr.d');
+  // NF detalhada dentro de fornecedor
+  const rn = e.target.closest('tr.d[data-n]');
   if(rn){
     const n = nfs[rn.dataset.n];
     openNF.has(n.key) ? openNF.delete(n.key) : openNF.add(n.key);
     draw(); return;
   }
+
+  // Linha de grupo (fornecedor OU produto)
   const r = e.target.closest('tr.f');
   if(!r) return;
-  const f = groups[r.dataset.i].f;
-  open.has(f) ? open.delete(f) : open.add(f);
+  const item = groups[r.dataset.i];
+  let key;
+  if(groupMode === 'produto') key = 'p:' + (item.cod || item.desc);
+  else key = item.f;
+
+  open.has(key) ? open.delete(key) : open.add(key);
   draw();
 };
 
@@ -762,14 +912,24 @@ document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => preset(b.da
 $('q').oninput = draw;
 $('rf').onclick = load;
 
-$('ea').onclick = () => { groups.forEach(g=>open.add(g.f)); draw(); };
-$('ca').onclick = () => { open.clear(); draw(); };
+$('ea').onclick = expandAll;
+$('ca').onclick = collapseAll;
 
 $('pc').onclick = () => printMode('details');
 $('ps').onclick = () => printMode('summary');
 
+document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => {
+  groupMode = b.dataset.g;
+  document.querySelectorAll('[data-g]').forEach(x => x.classList.toggle('on', x.dataset.g === groupMode));
+  open.clear(); openNF.clear();
+  draw();
+});
+
+/* ---------- Boot ---------- */
 document.querySelectorAll('[data-p]').forEach(b =>
   b.classList.toggle('on', b.dataset.p === DEFAULT_PRESET));
+document.querySelectorAll('[data-g]').forEach(b =>
+  b.classList.toggle('on', b.dataset.g === DEFAULT_GROUP));
 
 load().then(()=>preset(DEFAULT_PRESET));
 </script>
