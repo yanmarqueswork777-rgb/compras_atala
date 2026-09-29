@@ -25,6 +25,7 @@ th{background:#1d232d}td.n,th.n{text-align:right;font-variant-numeric:tabular-nu
 tr.f{cursor:pointer}tr.f:hover td{background:#1b212b}
 tr.d{cursor:pointer}tr.d:hover td{background:#1a2130}
 tr.d td{background:#141922;font-size:13px;color:#c5ccd6}tr.d td:first-child{padding-left:32px}
+tr.rs>td{background:#0f141b;padding:4px 12px 10px 32px;white-space:normal}
 tr.it>td{background:#0f141b;padding:8px 12px 12px 32px;white-space:normal}
 table.ii{font-size:12px}table.ii th{background:#1a2029}table.ii td,table.ii th{padding:5px 8px}
 table.ii tfoot td{border-top:1px solid #4ea1ff;font-weight:700}
@@ -97,11 +98,10 @@ function build(rows){
 
 const N3=v=>v.toLocaleString('pt-BR',{maximumFractionDigits:4});
 function itemsHTML(n){
-  const s=k=>n.it.reduce((a,x)=>a+x[k],0),ipi=s('ipi'),liq=s('liq'),tot=liq+ipi,dif=Math.round((n.v-tot)*100)/100;
+  const s=k=>n.it.reduce((a,x)=>a+x[k],0),ipi=s('ipi'),liq=s('liq');
   const rows=n.it.map(x=>`<tr><td>${x.cod}</td><td>${x.desc}</td><td>${x.gr}</td><td>${x.un}</td><td class="n">${N3(x.qtd)}</td><td class="n">${R(x.vu)}</td><td class="n">${R(x.vt)}</td><td class="n">${R(x.fr)}</td><td class="n">${R(x.dc)}</td><td class="n">${R(x.liq)}</td><td class="n">${R(x.icms)}</td><td class="n">${R(x.ipi)}</td></tr>`).join('');
   return `<div class="w"><table class="ii"><thead><tr><th>Cód.</th><th>Produto</th><th>Grupo</th><th>UN</th><th class="n">Qtd</th><th class="n">V. Unit.</th><th class="n">Total prod.</th><th class="n">Frete</th><th class="n">Desc. rat.</th><th class="n">Líquido</th><th class="n">ICMS</th><th class="n">IPI</th></tr></thead><tbody>${rows}</tbody>
-  <tfoot><tr><td colspan="6">${n.it.length} item(ns)</td><td class="n">${R(s('vt'))}</td><td class="n">${R(s('fr'))}</td><td class="n">${R(s('dc'))}</td><td class="n">${R(liq)}</td><td class="n">${R(s('icms'))}</td><td class="n">${R(ipi)}</td></tr></tfoot></table></div>
-  ${resumo(n)}`}
+  <tfoot><tr><td colspan="6">${n.it.length} item(ns)</td><td class="n">${R(s('vt'))}</td><td class="n">${R(s('fr'))}</td><td class="n">${R(s('dc'))}</td><td class="n">${R(liq)}</td><td class="n">${R(s('icms'))}</td><td class="n">${R(ipi)}</td></tr></tfoot></table></div>`}
 function resumo(n){
   const r2=v=>Math.round(v*100)/100,s=k=>n.it.reduce((a,x)=>a+x[k],0);
   const prod=r2(s('vt')),ipi=r2(s('ipi')),fr=r2(s('fr')),dn=r2(n.dn);
@@ -139,6 +139,7 @@ function draw(){
     h+=`<tr class="f" data-i="${i}"><td><span class="a">${op?'▼':'▶'}</span>${o.f}</td><td class="n">${o.c}</td><td class="n">${R(o.v)}</td></tr>`;
     if(op)o.l.slice().sort((a,b)=>b.eni.localeCompare(a.eni)||b.v-a.v).forEach(n=>{const j=nfs.indexOf(n),no=openNF.has(n.key);
       h+=`<tr class="d" data-n="${j}"><td><span class="a">${no?'▼':'▶'}</span>NF ${n.nf}${n.s?'/'+n.s:''} · Pedido ${n.ped} · Emissão ${n.em} · <b>Entrada ${n.en}</b> · ${n.it.length} it.</td><td class="n" colspan="2">${R(n.v)} &nbsp; ${n.ch?`<button class="s" data-c="${j}">Copiar chave</button> <button class="s" data-m="${j}">Consultar no Meu DANFE</button>`:'<span style="color:#8a94a3">sem chave</span>'}</td></tr>`;
+      h+=`<tr class="rs"><td colspan="3">${resumo(n)}</td></tr>`;
       if(no)h+=`<tr class="it"><td colspan="3">${itemsHTML(n)}</td></tr>`})});
   $('tb').innerHTML=h||'<tr><td colspan="3" style="color:#8a94a3">Nenhuma nota nesse período.</td></tr>';
   $('tf').innerHTML=`<tr><td>TOTAL</td><td class="n">${list.length}</td><td class="n">${R(tot)}</td></tr>`}
@@ -160,7 +161,7 @@ $('tb').onclick=e=>{
   const bc=e.target.closest('[data-c]'),bm=e.target.closest('[data-m]');
   if(bc){const n=nfs[bc.dataset.c];copy(n.ch).then(ok=>toast(ok?'Chave copiada!':'Chave: '+n.ch));return}
   if(bm){const n=nfs[bm.dataset.m];copy(n.ch).then(ok=>{toast(ok?'Chave copiada! Cole no Meu DANFE':'Chave: '+n.ch);window.open('https://www.meudanfe.com.br/','_blank','noopener')});return}
-  if(e.target.closest('tr.it'))return;
+  if(e.target.closest('tr.it')||e.target.closest('tr.rs'))return;
   const rn=e.target.closest('tr.d');
   if(rn){const n=nfs[rn.dataset.n];openNF.has(n.key)?openNF.delete(n.key):openNF.add(n.key);draw();return}
   const r=e.target.closest('tr.f');if(!r)return;
