@@ -208,8 +208,8 @@ table.ii tfoot td{
 /* ===== Mobile ===== */
 @media (max-width:720px){
   body{padding:12px;
-       padding-top:calc(12px + env(safe-area-inset-top,0px));
-       padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+     padding-top:calc(12px + env(safe-area-inset-top,0px));
+     padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
   h1{font-size:17px}
   .sub{font-size:12px}
   .card{padding:10px;border-radius:8px}
@@ -388,7 +388,7 @@ table.ii tfoot td{
   </div>
 
   <h1 class="no-print">Total das notas por fornecedor / produto</h1>
-  <div class="sub no-print">Dados do Google Sheets · filtro pela <b>Data de Entrada no Sistema</b></div>
+  <div class="sub no-print">Dados do Google Sheets · filtro pela **Data de Entrada no Sistema**</div>
 
   <div class="card no-print">
     <h2>Filtro por data de entrada</h2>
@@ -440,9 +440,9 @@ table.ii tfoot td{
 
 <script>
 /* ====== CONFIG ====== */
-const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4EIhTGYnvS8KrgGfYr0ujcE1XmFr2yVC_gPuzJSqIsEcusoCoaYR2BHrkBT8dJAketaDTFf6vGzI3/pub?output=csv';
-const DEFAULT_PRESET='30';      // hoje | 7 | 30 | mes | mesant | tudo
-const DEFAULT_GROUP ='fornecedor'; // fornecedor | produto
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4EIhTGYnvS8KrgGfYr0ujcE1XmFr2yVC_gPuzJSqIsEcusoCoaYR2BHrkBT8dJAketaDTFf6vGzI3/pub?output=csv';
+const DEFAULT_PRESET = '30';      // hoje | 7 | 30 | mes | mesant | tudo
+const DEFAULT_GROUP = 'fornecedor'; // fornecedor | produto
 /* ==================== */
 
 const $ = i => document.getElementById(i);
@@ -463,7 +463,7 @@ const ymd = d => {
   const z = n => String(n).padStart(2,'0');
   return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
 };
-const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function parseCSV(t){
   const rows=[]; let row=[], f='', q=false;
@@ -623,7 +623,7 @@ function preset(p){
 /* =================== DRAW =================== */
 function draw(){
   const q  = $('q').value.trim().toLowerCase();
-  const d1 = $('d1').value, d2 = $('d2').value;
+  const d1 = $('d1').value, d2 =$('d2').value;
 
   const list = nfs.filter(n =>
     (!d1 || n.eni >= d1) &&
@@ -826,16 +826,14 @@ async function getCSV(){
 }
 
 async function load(){
-  $('st').className = '';
-  $('st').textContent = 'Carregando planilha...';
+  $('st').className = '';$('st').textContent = 'Carregando planilha...';
   try{
     build(parseCSV(await getCSV()));
     const maxD = nfs.reduce((m,n)=> n.eni > m ? n.eni : m, '');
     $('st').textContent = `${nfs.length} notas carregadas · última entrada na planilha: ${fmtIso(maxD)} · atualizado às ${new Date().toLocaleTimeString('pt-BR')}`;
     draw();
   }catch(e){
-    $('st').className = 'err';
-    $('st').textContent = 'Erro: ' + e.message;
+    $('st').className = 'err';$('st').textContent = 'Erro: ' + e.message;
   }
 }
 
@@ -929,8 +927,7 @@ $('rf').onclick = load;
 $('ea').onclick = expandAll;
 $('ca').onclick = collapseAll;
 
-$('pc').onclick = () => printMode('details');
-$('ps').onclick = () => printMode('summary');
+$('pc').onclick = () => printMode('details');$('ps').onclick = () => printMode('summary');
 
 document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => {
   groupMode = b.dataset.g;
