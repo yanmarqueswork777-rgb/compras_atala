@@ -99,9 +99,9 @@ function build(rows){
 const N3=v=>v.toLocaleString('pt-BR',{maximumFractionDigits:4});
 function itemsHTML(n){
   const s=k=>n.it.reduce((a,x)=>a+x[k],0),ipi=s('ipi'),liq=s('liq');
-  const rows=n.it.map(x=>`<tr><td>${x.cod}</td><td>${x.desc}</td><td>${x.gr}</td><td>${x.un}</td><td class="n">${N3(x.qtd)}</td><td class="n">${R(x.vu)}</td><td class="n">${R(x.vt)}</td><td class="n">${R(x.fr)}</td><td class="n">${R(x.dc)}</td><td class="n">${R(x.liq)}</td><td class="n">${R(x.icms)}</td><td class="n">${R(x.ipi)}</td></tr>`).join('');
-  return `<div class="w"><table class="ii"><thead><tr><th>Cód.</th><th>Produto</th><th>Grupo</th><th>UN</th><th class="n">Qtd</th><th class="n">V. Unit.</th><th class="n">Total prod.</th><th class="n">Frete</th><th class="n">Desc. rat.</th><th class="n">Líquido</th><th class="n">ICMS</th><th class="n">IPI</th></tr></thead><tbody>${rows}</tbody>
-  <tfoot><tr><td colspan="6">${n.it.length} item(ns)</td><td class="n">${R(s('vt'))}</td><td class="n">${R(s('fr'))}</td><td class="n">${R(s('dc'))}</td><td class="n">${R(liq)}</td><td class="n">${R(s('icms'))}</td><td class="n">${R(ipi)}</td></tr></tfoot></table></div>`}
+  const rows=n.it.map(x=>`<tr><td>${x.cod}</td><td>${x.desc}</td><td>${x.gr}</td><td>${x.cfop}</td><td>${x.un}</td><td class="n">${N3(x.qtd)}</td><td class="n">${R(x.vu)}</td><td class="n">${R(x.vt)}</td><td class="n">${R(x.fr)}</td><td class="n">${R(x.dc)}</td><td class="n">${R(x.liq)}</td><td class="n">${R(x.icms)}</td><td class="n">${R(x.ipi)}</td></tr>`).join('');
+  return `<div class="w"><table class="ii"><thead><tr><th>Cód.</th><th>Produto</th><th>Grupo</th><th>CFOP</th><th>UN</th><th class="n">Qtd</th><th class="n">V. Unit.</th><th class="n">Total prod.</th><th class="n">Frete</th><th class="n">Desc. rat.</th><th class="n">Líquido</th><th class="n">ICMS</th><th class="n">IPI</th></tr></thead><tbody>${rows}</tbody>
+  <tfoot><tr><td colspan="7">${n.it.length} item(ns)</td><td class="n">${R(s('vt'))}</td><td class="n">${R(s('fr'))}</td><td class="n">${R(s('dc'))}</td><td class="n">${R(liq)}</td><td class="n">${R(s('icms'))}</td><td class="n">${R(ipi)}</td></tr></tfoot></table></div>`}
 function resumo(n){
   const r2=v=>Math.round(v*100)/100,s=k=>n.it.reduce((a,x)=>a+x[k],0);
   const prod=r2(s('vt')),ipi=r2(s('ipi')),fr=r2(s('fr')),dn=r2(n.dn);
