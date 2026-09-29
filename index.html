@@ -75,29 +75,60 @@ button.s.on{background:var(--accent);color:var(--accent-t);font-weight:700}
 
 .w{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
-table{border-collapse:collapse;width:100%}
-th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
-th{background:var(--bg3);font-weight:600;font-size:13px}
-td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+/* ===== Tabela principal ===== */
+.tbl-main{width:100%;border-collapse:collapse}
+.tbl-main th,.tbl-main td{
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+}
+.tbl-main th{background:var(--bg3);font-weight:600;font-size:13px;color:#b8c0cc}
+.tbl-main td.n,.tbl-main th.n{
+  text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.tbl-main tfoot td{
+  font-weight:700;border-top:2px solid var(--accent);border-bottom:0;
+}
 
+/* Linha fornecedor */
 tr.f{cursor:pointer}
 tr.f:hover td{background:#1b212b}
+tr.f td:first-child{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;
+}
+tr.f td:first-child .fname{word-break:break-word;min-width:0}
+
+.cf{
+  display:inline-block;
+  background:#26303d; color:#8fbcf5;
+  font-size:11px; padding:1px 7px; border-radius:4px;
+  font-variant-numeric:tabular-nums; font-weight:600;
+  flex:0 0 auto;
+}
+.a{display:inline-block;width:14px;color:var(--accent);flex:0 0 auto}
+
+/* Linha NF */
 tr.d{cursor:pointer}
 tr.d:hover td{background:#1a2130}
-tr.d td{background:var(--bg4);font-size:13px;color:#c5ccd6;white-space:normal}
-tr.d td:first-child{padding-left:32px}
-tr.rs > td{background:#0f141b;padding:4px 12px 10px 32px;white-space:normal}
-tr.it > td{background:#0f141b;padding:8px 12px 12px 32px;white-space:normal}
+tr.d td{
+  background:var(--bg4);font-size:13px;color:#c5ccd6;
+  white-space:normal;line-height:1.45;
+}
 
-table.ii{font-size:12px}
-table.ii th{background:#1a2029}
-table.ii td,table.ii th{padding:6px 8px}
-table.ii tfoot td{border-top:1px solid var(--accent);font-weight:700}
+/* Linha resumo */
+tr.rs > td{
+  background:#0f141b;padding:4px 12px 10px 32px;white-space:normal;
+}
+
+/* Linha itens */
+tr.it > td{
+  background:#0f141b;padding:10px 16px 16px 32px;white-space:normal;
+}
 
 .sum{
-  margin:10px 0 0 auto; max-width:460px; font-size:13px;
-  border:1px solid var(--border); border-radius:8px;
-  padding:8px 12px; background:var(--bg4);
+  margin:10px 0 0 auto;max-width:460px;font-size:13px;
+  border:1px solid var(--border);border-radius:8px;
+  padding:8px 12px;background:var(--bg4);
 }
 .sum div{display:flex;justify-content:space-between;gap:16px;padding:3px 0}
 .sum span{color:var(--muted)}
@@ -107,14 +138,50 @@ table.ii tfoot td{border-top:1px solid var(--accent);font-weight:700}
 .sum .tt span{color:var(--text);font-weight:700}
 .sum .tt b{color:var(--accent)}
 
-tfoot td{font-weight:700;border-top:2px solid var(--accent)}
-.a{display:inline-block;width:14px;color:var(--accent)}
+/* ===== Tabela de itens ===== */
+.items{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:#111721;
+}
+table.ii{
+  width:100%;
+  min-width:860px;
+  border-collapse:collapse;
+  font-size:12px;
+}
+table.ii th,table.ii td{
+  padding:6px 8px;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  vertical-align:top;
+}
+table.ii th{
+  background:#1a2029;font-weight:600;font-size:11px;color:#b8c0cc;
+  text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;
+}
+table.ii td.n,table.ii th.n{
+  text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+table.ii td.desc{
+  white-space:normal;word-break:break-word;line-height:1.3;min-width:180px;
+}
+table.ii tbody tr:hover td{background:#151b24}
+table.ii tbody tr:last-child td{border-bottom:0}
+table.ii tfoot td{
+  border-top:2px solid var(--accent);border-bottom:0;
+  font-weight:700;background:#0f141b;white-space:nowrap;
+}
+
+/* ===== Ações / status ===== */
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.actions .spacer{flex:1}
 
 #st{color:var(--muted);font-size:12.5px;margin:6px 0}
 #st.err{color:var(--err)}
-
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.actions .spacer{flex:1}
 
 #msg{
   position:fixed; bottom:calc(16px + env(safe-area-inset-bottom,0px));
@@ -125,8 +192,8 @@ tfoot td{font-weight:700;border-top:2px solid var(--accent)}
   box-shadow:0 6px 20px rgba(0,0,0,.4);
 }
 
-/* -------- Mobile -------- */
-@media (max-width:640px){
+/* ===== Mobile ===== */
+@media (max-width:720px){
   body{padding:12px;
        padding-top:calc(12px + env(safe-area-inset-top,0px));
        padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
@@ -137,37 +204,97 @@ tfoot td{font-weight:700;border-top:2px solid var(--accent)}
   label.wide{flex-basis:100%}
   .k > div{padding:8px}
   .k b{font-size:17px}
-  th,td{padding:8px 10px;font-size:13.5px}
-  tr.d td:first-child{padding-left:20px}
-  tr.rs > td{padding-left:20px}
-  tr.it > td{padding-left:12px}
-  table.ii{font-size:11.5px}
-  table.ii td,table.ii th{padding:4px 6px}
+
+  .tbl-main th,.tbl-main td{padding:8px 9px;font-size:13.5px}
+  tr.rs > td{padding:4px 8px 10px 16px}
+  tr.it > td{padding:8px 8px 12px 8px}
   .sum{max-width:100%}
+
+  /* ---- Itens viram cards no mobile ---- */
+  .items{overflow:visible;border:0;border-radius:0;background:transparent}
+  table.ii{min-width:0;display:block;width:100%;font-size:12.5px}
+  table.ii thead{display:none}
+  table.ii tbody,table.ii tfoot{display:block;width:100%}
+
+  table.ii tbody tr{
+    display:block;
+    background:#141922;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 10px;
+    margin-bottom:8px;
+  }
+  table.ii tbody tr:hover td{background:transparent}
+  table.ii tbody td{
+    display:flex;justify-content:space-between;gap:12px;
+    padding:2px 0;border:0;
+    white-space:normal;word-break:break-word;
+    background:transparent !important;
+  }
+  table.ii tbody td::before{
+    content:attr(data-label);
+    color:var(--muted);font-size:11px;
+    flex:0 0 auto;min-width:82px;
+  }
+  table.ii tbody td.desc{
+    display:block;
+    padding:0 0 6px;
+    border-bottom:1px dashed var(--border);
+    margin-bottom:6px;
+    font-weight:600;color:#fff;font-size:13px;
+    min-width:0;
+  }
+  table.ii tbody td.desc::before{
+    display:block;
+    font-size:10px;color:var(--accent);font-weight:700;
+    text-transform:uppercase;letter-spacing:.05em;
+    margin-bottom:2px;
+  }
+  table.ii tbody td.n::before{text-align:left}
+
+  table.ii tfoot{
+    display:block;
+    background:#0f141b;
+    border:1px solid var(--accent);
+    border-radius:8px;
+    padding:8px 10px;
+    margin-top:4px;
+  }
+  table.ii tfoot tr{display:block}
+  table.ii tfoot td{
+    display:flex;justify-content:space-between;gap:12px;
+    padding:2px 0;border:0;background:transparent;
+    font-weight:600;white-space:normal;
+  }
+  table.ii tfoot td::before{
+    content:attr(data-label);
+    color:var(--muted);font-weight:500;font-size:11px;
+  }
+  table.ii tfoot td[data-label=""]::before{content:""}
 }
 @media (max-width:420px){
   .k{grid-template-columns:1fr 1fr}
 }
 
-/* -------- Impressão -------- */
+/* ===== Impressão ===== */
+#printHeader{display:none}
 @media print{
   html,body{
-    background:#fff !important; color:#000 !important;
-    padding:0 !important; margin:0 !important; font-size:11px;
+    background:#fff !important;color:#000 !important;
+    padding:0 !important;margin:0 !important;font-size:11px;
   }
   *{
     -webkit-print-color-adjust:exact !important;
     print-color-adjust:exact !important;
-    box-shadow:none !important;
-    text-shadow:none !important;
+    box-shadow:none !important;text-shadow:none !important;
   }
   .box{max-width:none;margin:0}
   h1{font-size:16px;color:#000;margin-bottom:2px}
   .sub{color:#444;font-size:10px;margin-bottom:8px}
 
   .card{
-    background:#fff !important; border:1px solid #bbb !important;
-    padding:6px 8px !important; margin-bottom:8px !important;
+    background:#fff !important;border:1px solid #bbb !important;
+    padding:6px 8px !important;margin-bottom:8px !important;
     border-radius:4px;
   }
   .card h2{color:#000;font-size:10px}
@@ -184,30 +311,42 @@ tfoot td{font-weight:700;border-top:2px solid var(--accent)}
 
   .w{overflow:visible !important}
 
-  table{border:1px solid #999}
-  th,td{
+  .tbl-main{border:1px solid #999}
+  .tbl-main th,.tbl-main td{
     border-bottom:1px solid #ddd !important;
     padding:4px 6px !important;
     white-space:normal !important;
-    color:#000 !important;
-    font-size:10.5px;
+    color:#000 !important;font-size:10.5px;
   }
-  th{background:#eee !important;color:#000 !important;font-size:10px;font-weight:700}
-  tr.f td{background:#fff !important;color:#000 !important}
+  .tbl-main th{background:#eee !important;color:#000 !important;font-size:10px;font-weight:700}
   tr.f{cursor:default}
+  tr.f td{background:#fff !important;color:#000 !important}
   tr.d td{background:#f7f7f7 !important;color:#000 !important;font-size:9.5px;padding-left:20px !important}
   tr.rs > td{background:#fafafa !important;padding:2px 6px 6px 20px !important}
   tr.it > td{background:#fafafa !important;padding:4px 6px 8px 20px !important}
   tr.f,tr.d,tr.rs,tr.it{page-break-inside:avoid;break-inside:avoid}
 
-  table.ii{font-size:9px;border:1px solid #ccc}
-  table.ii th{background:#eee !important;color:#000 !important;font-size:9px}
-  table.ii td,table.ii th{padding:2px 4px !important}
-  table.ii tfoot td{border-top:1px solid #000 !important}
+  .cf{background:#eee !important;color:#000 !important;border:1px solid #ccc !important}
+
+  .items{overflow:visible !important;border:1px solid #ccc !important;background:#fff !important}
+  table.ii{min-width:0 !important;width:100% !important;font-size:9px !important;display:table !important}
+  table.ii thead,table.ii tbody,table.ii tfoot,
+  table.ii tr,table.ii th,table.ii td{display:revert !important}
+  table.ii th,table.ii td{
+    padding:2px 4px !important;
+    border-bottom:1px solid #ddd !important;
+    color:#000 !important;
+    white-space:nowrap;
+  }
+  table.ii th{background:#eee !important;color:#000 !important;font-size:8.5px}
+  table.ii td.desc{white-space:normal;word-break:break-word;min-width:0}
+  table.ii td.n,table.ii th.n{text-align:right}
+  table.ii td::before,table.ii th::before{display:none !important}
+  table.ii tfoot td{border-top:1px solid #000 !important;background:#fafafa !important}
 
   .sum{
-    background:#fafafa !important; border:1px solid #ccc !important;
-    color:#000 !important; font-size:10px; max-width:400px;
+    background:#fafafa !important;border:1px solid #ccc !important;
+    color:#000 !important;font-size:10px;max-width:400px;
   }
   .sum span{color:#555 !important}
   .sum b{color:#000 !important}
@@ -215,16 +354,13 @@ tfoot td{font-weight:700;border-top:2px solid var(--accent)}
   .sum .tt span{color:#000 !important}
   .sum .tt b{color:#000 !important}
 
-  tfoot td{border-top:2px solid #000 !important;color:#000 !important}
+  .tbl-main tfoot td{border-top:2px solid #000 !important;color:#000 !important}
   .a{color:#000 !important}
-  tbody tr:last-child td{border-bottom:none}
 
-  /* Cabeçalho de impressão */
   #printHeader{display:block !important}
+  #printHeader h1{margin:0 0 2px}
+  #printHeader .meta{font-size:10px;color:#555;margin-bottom:8px}
 }
-#printHeader{display:none}
-#printHeader h1{margin:0 0 2px}
-#printHeader .meta{font-size:10px;color:#555;margin-bottom:8px}
 @page{margin:10mm}
 </style>
 </head>
@@ -261,7 +397,7 @@ tfoot td{font-weight:700;border-top:2px solid var(--accent)}
   <div class="k" id="k"></div>
 
   <div class="card w" style="padding:0">
-    <table>
+    <table class="tbl-main">
       <thead>
         <tr><th>Fornecedor</th><th class="n">Notas</th><th class="n">Total das NFs</th></tr>
       </thead>
@@ -305,6 +441,7 @@ const ymd = d => {
   const z = n => String(n).padStart(2,'0');
   return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
 };
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function parseCSV(t){
   const rows=[]; let row=[], f='', q=false;
@@ -359,7 +496,10 @@ function build(rows){
 
     const ch = g('ch');
     const o = {
-      key, f:g('f'), ped:g('ped'), nf:g('nf'), s:g('s'), em:g('em'),
+      key,
+      cf: g('cf'),          // <-- código do fornecedor na NF
+      f:  g('f'),
+      ped:g('ped'), nf:g('nf'), s:g('s'), em:g('em'),
       en:g('en'), eni:iso(g('en')), v:num(g('v')), dn:num(g('dnf')),
       ch:/^\d{44}$/.test(ch)?ch:'', it:[it]
     };
@@ -371,12 +511,22 @@ function itemsHTML(n){
   const s = k => n.it.reduce((a,x)=>a+x[k],0);
   const ipi = s('ipi'), liq = s('liq');
   const rows = n.it.map(x=>`<tr>
-    <td>${x.cod}</td><td>${x.desc}</td><td>${x.gr}</td><td>${x.cfop}</td><td>${x.un}</td>
-    <td class="n">${N3(x.qtd)}</td><td class="n">${R(x.vu)}</td><td class="n">${R(x.vt)}</td>
-    <td class="n">${R(x.fr)}</td><td class="n">${R(x.dc)}</td><td class="n">${R(x.liq)}</td>
-    <td class="n">${R(x.icms)}</td><td class="n">${R(x.ipi)}</td>
+    <td data-label="Cód.">${esc(x.cod)}</td>
+    <td data-label="Produto" class="desc">${esc(x.desc)}</td>
+    <td data-label="Grupo">${esc(x.gr)}</td>
+    <td data-label="CFOP">${esc(x.cfop)}</td>
+    <td data-label="UN">${esc(x.un)}</td>
+    <td data-label="Qtd" class="n">${N3(x.qtd)}</td>
+    <td data-label="V. Unit." class="n">${R(x.vu)}</td>
+    <td data-label="Total prod." class="n">${R(x.vt)}</td>
+    <td data-label="Frete" class="n">${R(x.fr)}</td>
+    <td data-label="Desc. rat." class="n">${R(x.dc)}</td>
+    <td data-label="Líquido" class="n">${R(x.liq)}</td>
+    <td data-label="ICMS" class="n">${R(x.icms)}</td>
+    <td data-label="IPI" class="n">${R(x.ipi)}</td>
   </tr>`).join('');
-  return `<div class="w"><table class="ii">
+
+  return `<div class="items"><table class="ii">
     <thead><tr>
       <th>Cód.</th><th>Produto</th><th>Grupo</th><th>CFOP</th><th>UN</th>
       <th class="n">Qtd</th><th class="n">V. Unit.</th><th class="n">Total prod.</th>
@@ -385,10 +535,13 @@ function itemsHTML(n){
     </tr></thead>
     <tbody>${rows}</tbody>
     <tfoot><tr>
-      <td colspan="7">${n.it.length} item(ns)</td>
-      <td class="n">${R(s('vt'))}</td><td class="n">${R(s('fr'))}</td>
-      <td class="n">${R(s('dc'))}</td><td class="n">${R(liq)}</td>
-      <td class="n">${R(s('icms'))}</td><td class="n">${R(ipi)}</td>
+      <td colspan="7" data-label="">${n.it.length} item(ns)</td>
+      <td class="n" data-label="Total prod.">${R(s('vt'))}</td>
+      <td class="n" data-label="Frete">${R(s('fr'))}</td>
+      <td class="n" data-label="Desc. rat.">${R(s('dc'))}</td>
+      <td class="n" data-label="Líquido">${R(liq)}</td>
+      <td class="n" data-label="ICMS">${R(s('icms'))}</td>
+      <td class="n" data-label="IPI">${R(ipi)}</td>
     </tr></tfoot>
   </table></div>`;
 }
@@ -453,11 +606,14 @@ function draw(){
     (!d1 || n.eni >= d1) &&
     (!d2 || n.eni <= d2) &&
     (!q  || n.f.toLowerCase().includes(q) || n.nf.includes(q) ||
+           (n.cf && n.cf.toLowerCase().includes(q)) ||
            n.it.some(x => x.desc.toLowerCase().includes(q) || x.cod.toLowerCase() === q))
   );
 
   list.forEach(n=>{
-    const o = g[n.f] || (g[n.f] = {f:n.f, c:0, v:0, l:[]});
+    let o = g[n.f];
+    if(!o) o = g[n.f] = {f:n.f, cf:'', c:0, v:0, l:[]};
+    if(!o.cf && n.cf) o.cf = n.cf;
     o.c++; o.v += n.v; o.l.push(n);
   });
   groups = Object.values(g).sort((a,b)=>b.v - a.v);
@@ -479,7 +635,11 @@ function draw(){
   groups.forEach((o,i)=>{
     const op = open.has(o.f);
     h += `<tr class="f" data-i="${i}">
-      <td><span class="a">${op?'▼':'▶'}</span>${o.f}</td>
+      <td>
+        <span class="a">${op?'▼':'▶'}</span>
+        ${o.cf ? `<span class="cf">${esc(o.cf)}</span>` : ''}
+        <span class="fname">${esc(o.f)}</span>
+      </td>
       <td class="n">${o.c}</td>
       <td class="n">${R(o.v)}</td>
     </tr>`;
@@ -487,7 +647,14 @@ function draw(){
       o.l.slice().sort((a,b)=> b.eni.localeCompare(a.eni) || b.v - a.v).forEach(n=>{
         const j = nfs.indexOf(n), no = openNF.has(n.key);
         h += `<tr class="d" data-n="${j}">
-          <td><span class="a">${no?'▼':'▶'}</span>NF ${n.nf}${n.s?'/'+n.s:''} · Pedido ${n.ped} · Emissão ${n.em} · <b>Entrada ${n.en}</b> · ${n.it.length} it.</td>
+          <td>
+            <span class="a">${no?'▼':'▶'}</span>
+            NF ${esc(n.nf)}${n.s?'/'+esc(n.s):''}
+            · Pedido ${esc(n.ped)}
+            · Emissão ${esc(n.em)}
+            · <b>Entrada ${esc(n.en)}</b>
+            · ${n.it.length} it.
+          </td>
           <td class="n" colspan="2">${R(n.v)} &nbsp; ${
             n.ch
               ? `<button class="s" data-c="${j}">Copiar chave</button> <button class="s" data-m="${j}">Consultar no Meu DANFE</button>`
@@ -540,7 +707,7 @@ function printMode(mode){
     window.removeEventListener('afterprint', restore);
   };
   window.addEventListener('afterprint', restore);
-  setTimeout(restore, 60000); // fallback caso afterprint não dispare
+  setTimeout(restore, 60000);
 
   if(mode === 'summary'){
     open.clear();
