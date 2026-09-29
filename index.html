@@ -23,7 +23,12 @@ button.s.on{background:#4ea1ff;color:#04121f;font-weight:700}
 th,td{padding:9px 12px;border-bottom:1px solid #262d38;text-align:left;white-space:nowrap}
 th{background:#1d232d}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 tr.f{cursor:pointer}tr.f:hover td{background:#1b212b}
+tr.d{cursor:pointer}tr.d:hover td{background:#1a2130}
 tr.d td{background:#141922;font-size:13px;color:#c5ccd6}tr.d td:first-child{padding-left:32px}
+tr.it>td{background:#0f141b;padding:8px 12px 12px 32px;white-space:normal}
+table.ii{font-size:12px}table.ii th{background:#1a2029}table.ii td,table.ii th{padding:5px 8px}
+table.ii tfoot td{border-top:1px solid #4ea1ff;font-weight:700}
+.cf{font-size:12.5px;color:#8a94a3;margin-top:6px}.warn{color:#f5b942}.okk{color:#3ecf8e}
 tfoot td{font-weight:700;border-top:2px solid #4ea1ff}.a{display:inline-block;width:14px;color:#4ea1ff}
 #st{color:#8a94a3;font-size:12.5px;margin:6px 0}#st.err{color:#ff6b6b}
 #msg{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#3ecf8e;color:#04121f;padding:8px 14px;border-radius:8px;font-weight:600;display:none}
@@ -70,18 +75,30 @@ function parseCSV(t){
   if(f!==''||row.length){row.push(f);rows.push(row)}
   return rows}
 
-let nfs=[],groups=[];const open=new Set();
+let nfs=[],groups=[];const open=new Set(),openNF=new Set();
 function build(rows){
   const h=rows[0].map(x=>x.trim()),i=n=>h.indexOf(n),seen={};nfs=[];
-  const C={f:i('Nome_Fornecedor'),cf:i('Cod_Fornecedor'),ped:i('Pedido_Compra'),nf:i('Numero_NF'),s:i('Serie'),em:i('Data_Emissao_Nota'),en:i('Data_Entrada_Sistema'),v:i('Valor_Total_Nota_Geral'),ch:i('Chave_Acesso_NFe')};
+  const C={f:i('Nome_Fornecedor'),cf:i('Cod_Fornecedor'),ped:i('Pedido_Compra'),nf:i('Numero_NF'),s:i('Serie'),em:i('Data_Emissao_Nota'),en:i('Data_Entrada_Sistema'),v:i('Valor_Total_Nota_Geral'),ch:i('Chave_Acesso_NFe'),
+    cod:i('Codigo_Produto'),desc:i('Descricao_Produto'),un:i('Unidade_Medida'),gr:i('Descricao_Grupo'),cfop:i('CFOP_Item'),qtd:i('Quantidade'),vu:i('Valor_Unitario'),vt:i('Valor_Total_Produtos_Item'),fr:i('Valor_Frete_Item'),dc:i('Valor_Desconto_Rateado_Item'),liq:i('Valor_Liquido_Item'),icms:i('Valor_ICMS_Item'),ipi:i('Valor_IPI_Item')};
   if(Object.values(C).some(x=>x<0))throw new Error('Colunas não encontradas na planilha. Confira o cabeçalho.');
   rows.slice(1).forEach(r=>{
     if(r.length<h.length-2)return;
     const g=k=>(r[C[k]]||'').trim();
+    if(!g('nf'))return;
     const key=g('cf')+'|'+g('nf')+'|'+g('s')+'|'+g('ch');
-    if(seen[key]||!g('nf'))return;seen[key]=1;
+    const it={cod:g('cod'),desc:g('desc'),un:g('un'),gr:g('gr'),cfop:g('cfop'),qtd:num(g('qtd')),vu:num(g('vu')),vt:num(g('vt')),fr:num(g('fr')),dc:num(g('dc')),liq:num(g('liq')),icms:num(g('icms')),ipi:num(g('ipi'))};
+    if(seen[key]){seen[key].it.push(it);return}
     const ch=g('ch');
-    nfs.push({f:g('f'),ped:g('ped'),nf:g('nf'),s:g('s'),em:g('em'),en:g('en'),eni:iso(g('en')),v:num(g('v')),ch:/^\d{44}$/.test(ch)?ch:''})})}
+    const o={key,f:g('f'),ped:g('ped'),nf:g('nf'),s:g('s'),em:g('em'),en:g('en'),eni:iso(g('en')),v:num(g('v')),ch:/^\d{44}$/.test(ch)?ch:'',it:[it]};
+    seen[key]=o;nfs.push(o)})}
+
+const N3=v=>v.toLocaleString('pt-BR',{maximumFractionDigits:4});
+function itemsHTML(n){
+  const s=k=>n.it.reduce((a,x)=>a+x[k],0),ipi=s('ipi'),liq=s('liq'),tot=liq+ipi,dif=Math.round((n.v-tot)*100)/100;
+  const rows=n.it.map(x=>`<tr><td>${x.cod}</td><td>${x.desc}</td><td>${x.gr}</td><td>${x.un}</td><td class="n">${N3(x.qtd)}</td><td class="n">${R(x.vu)}</td><td class="n">${R(x.vt)}</td><td class="n">${R(x.fr)}</td><td class="n">${R(x.dc)}</td><td class="n">${R(x.liq)}</td><td class="n">${R(x.icms)}</td><td class="n">${R(x.ipi)}</td></tr>`).join('');
+  return `<div class="w"><table class="ii"><thead><tr><th>Cód.</th><th>Produto</th><th>Grupo</th><th>UN</th><th class="n">Qtd</th><th class="n">V. Unit.</th><th class="n">Total prod.</th><th class="n">Frete</th><th class="n">Desc. rat.</th><th class="n">Líquido</th><th class="n">ICMS</th><th class="n">IPI</th></tr></thead><tbody>${rows}</tbody>
+  <tfoot><tr><td colspan="6">${n.it.length} item(ns)</td><td class="n">${R(s('vt'))}</td><td class="n">${R(s('fr'))}</td><td class="n">${R(s('dc'))}</td><td class="n">${R(liq)}</td><td class="n">${R(s('icms'))}</td><td class="n">${R(ipi)}</td></tr></tfoot></table></div>
+  <div class="cf">Total da NF: <b>${R(n.v)}</b> · Líquido + IPI dos itens: <b>${R(tot)}</b>${Math.abs(dif)>0.05?` · <span class="warn">diferença ${R(dif)} (frete/despesas da nota, ou item duplicado/faltando na query)</span>`:' · <span class="okk">confere ✔</span>'}</div>`}
 
 function toast(t){const m=$('msg');m.textContent=t;m.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>m.style.display='none',2800)}
 function fb(t){try{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();const ok=document.execCommand('copy');x.remove();return ok}catch(e){return false}}
@@ -99,7 +116,7 @@ function preset(p){
 
 function draw(){
   const q=$('q').value.toLowerCase(),d1=$('d1').value,d2=$('d2').value,g={};
-  const list=nfs.filter(n=>(!d1||n.eni>=d1)&&(!d2||n.eni<=d2)&&(!q||n.f.toLowerCase().includes(q)||n.nf.includes(q)));
+  const list=nfs.filter(n=>(!d1||n.eni>=d1)&&(!d2||n.eni<=d2)&&(!q||n.f.toLowerCase().includes(q)||n.nf.includes(q)||n.it.some(x=>x.desc.toLowerCase().includes(q)||x.cod.toLowerCase()==q)));
   list.forEach(n=>{const o=g[n.f]||(g[n.f]={f:n.f,c:0,v:0,l:[]});o.c++;o.v+=n.v;o.l.push(n)});
   groups=Object.values(g).sort((a,b)=>b.v-a.v);
   const tot=groups.reduce((a,x)=>a+x.v,0);
@@ -107,8 +124,9 @@ function draw(){
   let h='';
   groups.forEach((o,i)=>{const op=open.has(o.f);
     h+=`<tr class="f" data-i="${i}"><td><span class="a">${op?'▼':'▶'}</span>${o.f}</td><td class="n">${o.c}</td><td class="n">${R(o.v)}</td></tr>`;
-    if(op)o.l.slice().sort((a,b)=>b.eni.localeCompare(a.eni)||b.v-a.v).forEach(n=>{const j=nfs.indexOf(n);
-      h+=`<tr class="d"><td>NF ${n.nf}${n.s?'/'+n.s:''} · Pedido ${n.ped} · Emissão ${n.em} · <b>Entrada ${n.en}</b></td><td class="n" colspan="2">${R(n.v)} &nbsp; ${n.ch?`<button class="s" data-c="${j}">Copiar chave</button> <button class="s" data-m="${j}">Consultar no Meu DANFE</button>`:'<span style="color:#8a94a3">sem chave</span>'}</td></tr>`})});
+    if(op)o.l.slice().sort((a,b)=>b.eni.localeCompare(a.eni)||b.v-a.v).forEach(n=>{const j=nfs.indexOf(n),no=openNF.has(n.key);
+      h+=`<tr class="d" data-n="${j}"><td><span class="a">${no?'▼':'▶'}</span>NF ${n.nf}${n.s?'/'+n.s:''} · Pedido ${n.ped} · Emissão ${n.em} · <b>Entrada ${n.en}</b> · ${n.it.length} it.</td><td class="n" colspan="2">${R(n.v)} &nbsp; ${n.ch?`<button class="s" data-c="${j}">Copiar chave</button> <button class="s" data-m="${j}">Consultar no Meu DANFE</button>`:'<span style="color:#8a94a3">sem chave</span>'}</td></tr>`;
+      if(no)h+=`<tr class="it"><td colspan="3">${itemsHTML(n)}</td></tr>`})});
   $('tb').innerHTML=h||'<tr><td colspan="3" style="color:#8a94a3">Nenhuma nota nesse período.</td></tr>';
   $('tf').innerHTML=`<tr><td>TOTAL</td><td class="n">${list.length}</td><td class="n">${R(tot)}</td></tr>`}
 
@@ -129,6 +147,9 @@ $('tb').onclick=e=>{
   const bc=e.target.closest('[data-c]'),bm=e.target.closest('[data-m]');
   if(bc){const n=nfs[bc.dataset.c];copy(n.ch).then(ok=>toast(ok?'Chave copiada!':'Chave: '+n.ch));return}
   if(bm){const n=nfs[bm.dataset.m];copy(n.ch).then(ok=>{toast(ok?'Chave copiada! Cole no Meu DANFE':'Chave: '+n.ch);window.open('https://www.meudanfe.com.br/','_blank','noopener')});return}
+  if(e.target.closest('tr.it'))return;
+  const rn=e.target.closest('tr.d');
+  if(rn){const n=nfs[rn.dataset.n];openNF.has(n.key)?openNF.delete(n.key):openNF.add(n.key);draw();return}
   const r=e.target.closest('tr.f');if(!r)return;
   const f=groups[r.dataset.i].f;open.has(f)?open.delete(f):open.add(f);draw()};
 document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>preset(b.dataset.p));
