@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Total por Fornecedor</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}body{margin:0;padding:16px;background:#0f1217;color:#e6e9ee;font:15px system-ui,sans-serif}
+h1{font-size:20px;margin:0 0 4px}.sub{color:#8a94a3;font-size:12.5px;margin-bottom:12px}
+.box{max-width:900px}
+.card{background:#181d25;border:1px solid #262d38;border-radius:10px;padding:12px;margin-bottom:12px}
+.card h2{font-size:13px;margin:0 0 8px;color:#4ea1ff;text-transform:uppercase;letter-spacing:.04em}
+.r{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+label{display:flex;flex-direction:column;font-size:12px;color:#8a94a3;gap:3px}
+input,button{background:#0c1015;color:#e6e9ee;border:1px solid #262d38;border-radius:6px;padding:8px;font:inherit}
+input[type=date]{color-scheme:dark}
+button{background:#4ea1ff;color:#04121f;border:0;font-weight:600;cursor:pointer}
+button.s{background:#262d38;color:#e6e9ee;font-weight:500;padding:6px 10px;font-size:13px}
+button.s.on{background:#4ea1ff;color:#04121f;font-weight:700}
+.k{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.k div{flex:1;min-width:150px;background:#181d25;border:1px solid #262d38;border-radius:10px;padding:10px}
+.k span{font-size:12px;color:#8a94a3}.k b{display:block;font-size:19px;color:#4ea1ff;margin-top:3px}
+.w{overflow-x:auto}table{border-collapse:collapse;width:100%}
+th,td{padding:9px 12px;border-bottom:1px solid #262d38;text-align:left;white-space:nowrap}
+th{background:#1d232d}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.f{cursor:pointer}tr.f:hover td{background:#1b212b}
+tr.d td{background:#141922;font-size:13px;color:#c5ccd6}tr.d td:first-child{padding-left:32px}
+tfoot td{font-weight:700;border-top:2px solid #4ea1ff}.a{display:inline-block;width:14px;color:#4ea1ff}
+#st{color:#8a94a3;font-size:12.5px;margin:6px 0}#st.err{color:#ff6b6b}
+#msg{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#3ecf8e;color:#04121f;padding:8px 14px;border-radius:8px;font-weight:600;display:none}
+</style></head><body><div class="box">
+<h1>Total das notas por fornecedor</h1>
+<div class="sub">Dados do Google Sheets · filtro pela <b>Data de Entrada no Sistema</b></div>
+
+<div class="card"><h2>Filtro por data de entrada</h2>
+<div class="r" style="margin-bottom:8px">
+<button class="s" data-p="hoje">Hoje</button><button class="s" data-p="7">7 dias</button>
+<button class="s" data-p="30">30 dias</button><button class="s" data-p="mes">Mês atual</button>
+<button class="s" data-p="mesant">Mês anterior</button><button class="s" data-p="tudo">Tudo</button></div>
+<div class="r">
+<label>Entrada de<input type="date" id="d1"></label>
+<label>Entrada até<input type="date" id="d2"></label>
+<label style="flex:1;min-width:200px">Fornecedor ou NF<input id="q" placeholder="Filtrar..."></label>
+<button id="rf" style="align-self:flex-end">↻ Atualizar</button></div></div>
+
+<div id="st">Carregando...</div>
+<div class="k" id="k"></div>
+<div class="card w" style="padding:0"><table><thead><tr><th>Fornecedor</th><th class="n">Notas</th><th class="n">Total das NFs</th></tr></thead><tbody id="tb"></tbody><tfoot id="tf"></tfoot></table></div>
+<div class="r" style="margin-bottom:12px"><button class="s" id="ea">Expandir todos</button><button class="s" id="ca">Recolher todos</button></div>
+<div id="msg"></div>
+</div>
+<script>
+// ====== CONFIG ======
+const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4EIhTGYnvS8KrgGfYr0ujcE1XmFr2yVC_gPuzJSqIsEcusoCoaYR2BHrkBT8dJAketaDTFf6vGzI3/pub?output=csv';
+const DEFAULT_PRESET='30'; // hoje | 7 | 30 | mes | mesant | tudo
+// ====================
+const $=i=>document.getElementById(i),R=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const num=s=>{s=String(s==null?'0':s).trim();if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');return parseFloat(s)||0};
+const iso=d=>{const p=(d||'').trim().split('/');return p.length==3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:''};
+const fmtIso=i=>i?i.split('-').reverse().join('/'):'';
+const ymd=d=>{const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`};
+
+function parseCSV(t){
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c=='"')q=true;
+    else if(c==','){row.push(f);f=''}
+    else if(c=='\n'){row.push(f);rows.push(row);row=[];f=''}
+    else if(c!='\r')f+=c}
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  return rows}
+
+let nfs=[],groups=[];const open=new Set();
+function build(rows){
+  const h=rows[0].map(x=>x.trim()),i=n=>h.indexOf(n),seen={};nfs=[];
+  const C={f:i('Nome_Fornecedor'),cf:i('Cod_Fornecedor'),ped:i('Pedido_Compra'),nf:i('Numero_NF'),s:i('Serie'),em:i('Data_Emissao_Nota'),en:i('Data_Entrada_Sistema'),v:i('Valor_Total_Nota_Geral'),ch:i('Chave_Acesso_NFe')};
+  if(Object.values(C).some(x=>x<0))throw new Error('Colunas não encontradas na planilha. Confira o cabeçalho.');
+  rows.slice(1).forEach(r=>{
+    if(r.length<h.length-2)return;
+    const g=k=>(r[C[k]]||'').trim();
+    const key=g('cf')+'|'+g('nf')+'|'+g('s')+'|'+g('ch');
+    if(seen[key]||!g('nf'))return;seen[key]=1;
+    const ch=g('ch');
+    nfs.push({f:g('f'),ped:g('ped'),nf:g('nf'),s:g('s'),em:g('em'),en:g('en'),eni:iso(g('en')),v:num(g('v')),ch:/^\d{44}$/.test(ch)?ch:''})})}
+
+function toast(t){const m=$('msg');m.textContent=t;m.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>m.style.display='none',2800)}
+function fb(t){try{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();const ok=document.execCommand('copy');x.remove();return ok}catch(e){return false}}
+function copy(t){if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(t).then(()=>true).catch(()=>fb(t));return Promise.resolve(fb(t))}
+
+function preset(p){
+  const t=new Date(),a=new Date(t);let d1='',d2='';
+  if(p=='hoje'){d1=d2=ymd(t)}
+  else if(p=='7'||p=='30'){a.setDate(t.getDate()-(+p-1));d1=ymd(a);d2=ymd(t)}
+  else if(p=='mes'){d1=ymd(new Date(t.getFullYear(),t.getMonth(),1));d2=ymd(t)}
+  else if(p=='mesant'){d1=ymd(new Date(t.getFullYear(),t.getMonth()-1,1));d2=ymd(new Date(t.getFullYear(),t.getMonth(),0))}
+  $('d1').value=d1;$('d2').value=d2;
+  document.querySelectorAll('[data-p]').forEach(b=>b.classList.toggle('on',b.dataset.p==p));
+  draw()}
+
+function draw(){
+  const q=$('q').value.toLowerCase(),d1=$('d1').value,d2=$('d2').value,g={};
+  const list=nfs.filter(n=>(!d1||n.eni>=d1)&&(!d2||n.eni<=d2)&&(!q||n.f.toLowerCase().includes(q)||n.nf.includes(q)));
+  list.forEach(n=>{const o=g[n.f]||(g[n.f]={f:n.f,c:0,v:0,l:[]});o.c++;o.v+=n.v;o.l.push(n)});
+  groups=Object.values(g).sort((a,b)=>b.v-a.v);
+  const tot=groups.reduce((a,x)=>a+x.v,0);
+  $('k').innerHTML=[['Período (entrada)',(d1||d2)?`${fmtIso(d1)||'início'} a ${fmtIso(d2)||'hoje'}`:'Todo o período'],['Fornecedores',groups.length],['Notas',list.length],['Total das NFs',R(tot)]].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
+  let h='';
+  groups.forEach((o,i)=>{const op=open.has(o.f);
+    h+=`<tr class="f" data-i="${i}"><td><span class="a">${op?'▼':'▶'}</span>${o.f}</td><td class="n">${o.c}</td><td class="n">${R(o.v)}</td></tr>`;
+    if(op)o.l.slice().sort((a,b)=>b.eni.localeCompare(a.eni)||b.v-a.v).forEach(n=>{const j=nfs.indexOf(n);
+      h+=`<tr class="d"><td>NF ${n.nf}${n.s?'/'+n.s:''} · Pedido ${n.ped} · Emissão ${n.em} · <b>Entrada ${n.en}</b></td><td class="n" colspan="2">${R(n.v)} &nbsp; ${n.ch?`<button class="s" data-c="${j}">Copiar chave</button> <button class="s" data-m="${j}">Consultar no Meu DANFE</button>`:'<span style="color:#8a94a3">sem chave</span>'}</td></tr>`})});
+  $('tb').innerHTML=h||'<tr><td colspan="3" style="color:#8a94a3">Nenhuma nota nesse período.</td></tr>';
+  $('tf').innerHTML=`<tr><td>TOTAL</td><td class="n">${list.length}</td><td class="n">${R(tot)}</td></tr>`}
+
+async function getCSV(){
+  const u=CSV_URL+(CSV_URL.includes('?')?'&':'?')+'_='+Date.now();
+  try{const r=await fetch(u);if(!r.ok)throw 0;return await r.text()}
+  catch(e){const r=await fetch('/api/csv?_='+Date.now());if(!r.ok)throw new Error('Não consegui ler a planilha (verifique se está publicada como CSV).');return await r.text()}}
+
+async function load(){
+  $('st').className='';$('st').textContent='Carregando planilha...';
+  try{build(parseCSV(await getCSV()));
+    const maxD=nfs.reduce((m,n)=>n.eni>m?n.eni:m,'');
+    $('st').textContent=`${nfs.length} notas carregadas · última entrada na planilha: ${fmtIso(maxD)} · atualizado às ${new Date().toLocaleTimeString('pt-BR')}`;
+    draw()}
+  catch(e){$('st').className='err';$('st').textContent='Erro: '+e.message}}
+
+$('tb').onclick=e=>{
+  const bc=e.target.closest('[data-c]'),bm=e.target.closest('[data-m]');
+  if(bc){const n=nfs[bc.dataset.c];copy(n.ch).then(ok=>toast(ok?'Chave copiada!':'Chave: '+n.ch));return}
+  if(bm){const n=nfs[bm.dataset.m];copy(n.ch).then(ok=>{toast(ok?'Chave copiada! Cole no Meu DANFE':'Chave: '+n.ch);window.open('https://www.meudanfe.com.br/','_blank','noopener')});return}
+  const r=e.target.closest('tr.f');if(!r)return;
+  const f=groups[r.dataset.i].f;open.has(f)?open.delete(f):open.add(f);draw()};
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>preset(b.dataset.p));
+['d1','d2'].forEach(i=>$(i).oninput=()=>{document.querySelectorAll('[data-p]').forEach(b=>b.classList.remove('on'));draw()});
+$('q').oninput=draw;$('rf').onclick=load;
+$('ea').onclick=()=>{groups.forEach(g=>open.add(g.f));draw()};
+$('ca').onclick=()=>{open.clear();draw()};
+document.querySelectorAll('[data-p]').forEach(b=>b.classList.toggle('on',b.dataset.p==DEFAULT_PRESET));
+load().then(()=>preset(DEFAULT_PRESET));
+</script></body></html>
