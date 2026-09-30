@@ -456,7 +456,7 @@ table.ii tfoot td{
 
     <div class="gp" id="gp" hidden>
       <div class="r middle">
-        <input id="gq" placeholder="Buscar grupo..." autocomplete="off">
+        <input id="gq" placeholder="Buscar grupo ou código..." autocomplete="off">
         <button class="s" id="gAll" title="Marca os grupos visíveis na lista">Marcar</button>
         <button class="s" id="gNone" title="Desmarca os grupos visíveis na lista">Desmarcar</button>
         <button class="s" id="gInv" title="Inverte os grupos visíveis na lista">Inverter</button>
@@ -546,6 +546,7 @@ let selG = null;
 let saveG = false;
 let allGroups = [];
 let gView = [];
+let gCode = {};   // nome do grupo -> Codigo_Grupo
 
 function loadG(){
   try{
@@ -571,7 +572,7 @@ function setSel(set){
 const gCount = () => selG ? allGroups.filter(g => selG.has(g)).length : allGroups.length;
 function gDesc(){
   if(!selG) return '';
-  const a = allGroups.filter(g => selG.has(g));
+  const a = allGroups.filter(g => selG.has(g)).map(g => gCode[g] ? `${gCode[g]} ${g}` : g);
   if(!a.length) return ' · Grupos: nenhum';
   return ` · Grupos: ${a.slice(0,6).join(', ')}${a.length>6 ? ` (+${a.length-6})` : ''}`;
 }
@@ -607,6 +608,7 @@ function build(rows){
     liq:i('Valor_Liquido_Item'), icms:i('Valor_ICMS_Item'),
     ipi:i('Valor_IPI_Item'), dnf:i('Valor_Desconto_Total_Nota')
   };
+  const cgI = i('Codigo_Grupo');
   if(Object.values(C).some(x=>x<0)) throw new Error('Colunas não encontradas na planilha. Confira o cabeçalho.');
 
   rows.slice(1).forEach(r=>{
@@ -616,7 +618,7 @@ function build(rows){
 
     const key = g('cf')+'|'+g('nf')+'|'+g('s')+'|'+g('ch');
     const it = {
-      cod:g('cod'), desc:g('desc'), un:g('un'), gr:g('gr'), cfop:g('cfop'),
+      cod:g('cod'), desc:g('desc'), un:g('un'), gr:g('gr'), cg:(cgI>=0 ? (r[cgI]||'').trim() : ''), cfop:g('cfop'),
       qtd:num(g('qtd')), vu:num(g('vu')), vt:num(g('vt')),
       fr:num(g('fr')), dc:num(g('dc')), liq:num(g('liq')),
       icms:num(g('icms')), ipi:num(g('ipi'))
@@ -636,7 +638,8 @@ function build(rows){
   });
 
   const gs = new Set();
-  nfs.forEach(n => n.it.forEach(x => gs.add(gName(x))));
+  gCode = {};
+  nfs.forEach(n => n.it.forEach(x => { const k = gName(x); gs.add(k); if(x.cg && !gCode[k]) gCode[k] = x.cg; }));
   allGroups = [...gs].sort((a,b)=>a.localeCompare(b,'pt-BR'));
 }
 
@@ -646,7 +649,7 @@ function itemsHTML(n){
   const rows = n.it.map(x=>`<tr>
     <td data-label="Cód.">${esc(x.cod)}</td>
     <td data-label="Produto" class="desc">${esc(x.desc)}</td>
-    <td data-label="Grupo">${esc(x.gr)}</td>
+    <td data-label="Grupo">${x.cg ? esc(x.cg)+' · ' : ''}${esc(x.gr)}</td>
     <td data-label="CFOP">${esc(x.cfop)}</td>
     <td data-label="UN">${esc(x.un)}</td>
     <td data-label="Qtd" class="n">${N3(x.qtd)}</td>
@@ -751,13 +754,14 @@ function drawG(){
   });
 
   const q = $('gq').value.trim().toLowerCase();
-  gView = allGroups.filter(g => !q || g.toLowerCase().includes(q));
+  gView = allGroups.filter(g => !q || g.toLowerCase().includes(q) || (gCode[g]||'').toLowerCase().includes(q));
 
   const box = $('gl'), sc = box.scrollTop;
   box.innerHTML = gView.length ? gView.map((g,i)=>{
     const c = cnt[g] || 0;
     return `<label class="gi${c?'':' z'}">
       <input type="checkbox" data-gi="${i}" ${(!selG || selG.has(g)) ? 'checked' : ''}>
+      ${gCode[g] ? `<span class="cf">${esc(gCode[g])}</span>` : ''}
       <span class="gn">${esc(g)}</span>
       <span class="gc">${c} it. · ${R(val[g]||0)}</span>
     </label>`;
@@ -873,7 +877,7 @@ function drawProduto(list, periodo, q){
       const key = it.cod || it.desc;
       let o = g[key];
       if(!o) o = g[key] = {
-        cod:it.cod, desc:it.desc, un:it.un, gr:it.gr,
+        cod:it.cod, desc:it.desc, un:it.un, gr:it.gr, cg:it.cg,
         qtd:0, vt:0, liq:0, icms:0, ipi:0, fr:0, dc:0, nfs:[]
       };
       o.qtd += it.qtd;
@@ -921,7 +925,7 @@ function drawProduto(list, periodo, q){
         <span class="a">${op?'▼':'▶'}</span>
         ${o.cod ? `<span class="cf">${esc(o.cod)}</span>` : ''}
         <span class="fname">${esc(o.desc)}</span>
-        ${o.gr ? `<span class="gr-tag">· ${esc(o.gr)}</span>` : ''}
+        ${o.gr ? `<span class="gr-tag">· ${o.cg ? esc(o.cg)+' ' : ''}${esc(o.gr)}</span>` : ''}
       </td>
       <td class="n">${N3(o.qtd)}${o.un?' '+esc(o.un):''}</td>
       <td class="n">${R(o.liq)}</td>
