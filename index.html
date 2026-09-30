@@ -13,6 +13,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
+[hidden]{display:none !important}
 html,body{margin:0;padding:0}
 body{
   background:var(--bg); color:var(--text);
@@ -26,6 +27,7 @@ body{
 
 h1{font-size:20px;margin:0 0 4px;line-height:1.2}
 .sub{color:var(--muted);font-size:12.5px;margin-bottom:12px}
+.sub b{color:var(--text);font-weight:600}
 
 .card{
   background:var(--bg2); border:1px solid var(--border);
@@ -51,6 +53,10 @@ input,button{
   padding:10px 12px; font:inherit; min-height:42px;
 }
 input[type=date]{color-scheme:dark;min-width:0}
+input[type=checkbox]{
+  min-height:0;width:18px;height:18px;padding:0;flex:0 0 auto;
+  accent-color:var(--accent);cursor:pointer;
+}
 input:focus,button:focus{outline:2px solid var(--accent);outline-offset:1px}
 
 button{
@@ -69,6 +75,34 @@ button.s.on{background:var(--accent);color:var(--accent-t);font-weight:700}
 .seg-label{
   color:var(--muted);font-size:12px;align-self:center;
   margin-right:4px;font-weight:600;
+}
+
+/* ===== Filtro de grupos (recolhível) ===== */
+.gp{
+  margin-top:8px;padding:10px;border:1px solid var(--border);
+  border-radius:8px;background:var(--bg4);
+}
+.gp .r + .r{margin-top:8px}
+.gp input#gq{flex:1;min-width:160px}
+.gl{
+  margin-top:8px;max-height:260px;overflow-y:auto;
+  border:1px solid var(--border);border-radius:6px;background:#0c1015;
+  -webkit-overflow-scrolling:touch;
+}
+label.gi{
+  flex-direction:row;align-items:center;gap:10px;
+  padding:8px 10px;border-bottom:1px solid var(--border);
+  color:var(--text);font-size:13px;cursor:pointer;
+}
+label.gi:last-child{border-bottom:0}
+label.gi:hover{background:#151b24}
+label.gi.z{opacity:.5}
+.gi .gn{flex:1;min-width:0;word-break:break-word}
+.gi .gc{color:var(--muted);font-size:11.5px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.gempty{padding:12px;color:var(--muted);font-size:13px}
+label.gs{
+  flex-direction:row;align-items:center;gap:8px;
+  color:var(--text);font-size:13px;cursor:pointer;margin-top:10px;
 }
 
 .k{
@@ -215,6 +249,7 @@ table.ii tfoot td{
   .card{padding:10px;border-radius:8px}
   label{flex:1 1 140px}
   label.wide{flex-basis:100%}
+  label.gi,label.gs{flex:0 0 auto}
   .k > div{padding:8px}
   .k b{font-size:17px}
 
@@ -388,10 +423,10 @@ table.ii tfoot td{
   </div>
 
   <h1 class="no-print">Total das notas por fornecedor / produto</h1>
-  <div class="sub no-print">Dados do Google Sheets · filtro pela **Data de Entrada no Sistema**</div>
+  <div class="sub no-print">Dados do Google Sheets · filtro pela <b>Data de Entrada no Sistema</b></div>
 
   <div class="card no-print">
-    <h2>Filtro por data de entrada</h2>
+    <h2>Filtros</h2>
 
     <div class="r middle">
       <span class="seg-label">Agrupar por:</span>
@@ -413,6 +448,21 @@ table.ii tfoot td{
       <label>Entrada até<input type="date" id="d2"></label>
       <label class="wide" style="flex:1;min-width:200px">Fornecedor, NF ou produto<input id="q" placeholder="Filtrar..."></label>
       <button id="rf">↻ Atualizar</button>
+    </div>
+
+    <div class="r middle">
+      <button class="s" id="gb" aria-expanded="false" aria-controls="gp">Grupos: Todos ▾</button>
+    </div>
+
+    <div class="gp" id="gp" hidden>
+      <div class="r middle">
+        <input id="gq" placeholder="Buscar grupo..." autocomplete="off">
+        <button class="s" id="gAll" title="Marca os grupos visíveis na lista">Marcar</button>
+        <button class="s" id="gNone" title="Desmarca os grupos visíveis na lista">Desmarcar</button>
+        <button class="s" id="gInv" title="Inverte os grupos visíveis na lista">Inverter</button>
+      </div>
+      <div class="gl" id="gl"></div>
+      <label class="gs"><input type="checkbox" id="gSave"> Lembrar esta seleção nas próximas consultas</label>
     </div>
   </div>
 
@@ -443,11 +493,14 @@ table.ii tfoot td{
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4EIhTGYnvS8KrgGfYr0ujcE1XmFr2yVC_gPuzJSqIsEcusoCoaYR2BHrkBT8dJAketaDTFf6vGzI3/pub?output=csv';
 const DEFAULT_PRESET = '30';      // hoje | 7 | 30 | mes | mesant | tudo
 const DEFAULT_GROUP = 'fornecedor'; // fornecedor | produto
+const GKEY = 'nfs.filtroGrupos.v1'; // chave do localStorage (grupos salvos)
+const SEM_GRUPO = '(Sem grupo)';
 /* ==================== */
 
 const $ = i => document.getElementById(i);
 const R = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const N3 = v => v.toLocaleString('pt-BR',{maximumFractionDigits:4});
+const r2 = v => Math.round(v*100)/100;
 
 const num = s => {
   s = String(s==null?'0':s).trim();
@@ -464,6 +517,7 @@ const ymd = d => {
   return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
 };
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const gName = x => x.gr || SEM_GRUPO;
 
 function parseCSV(t){
   const rows=[]; let row=[], f='', q=false;
@@ -484,6 +538,58 @@ function parseCSV(t){
 let nfs=[], groups=[];
 let groupMode = DEFAULT_GROUP;
 const open=new Set(), openNF=new Set();
+
+/* ====== Filtro de grupos ======
+   selG === null  -> todos os grupos (sem filtro)
+   selG === Set   -> apenas os grupos do Set                     */
+let selG = null;
+let saveG = false;
+let allGroups = [];
+let gView = [];
+
+function loadG(){
+  try{
+    const j = JSON.parse(localStorage.getItem(GKEY) || 'null');
+    if(j){
+      saveG = true;
+      selG = Array.isArray(j.sel) ? new Set(j.sel) : null;
+    }
+  }catch(e){}
+}
+function persistG(){
+  try{
+    if(saveG) localStorage.setItem(GKEY, JSON.stringify({sel: selG ? [...selG] : null}));
+    else localStorage.removeItem(GKEY);
+  }catch(e){}
+}
+const curG = () => new Set(selG || allGroups);
+function setSel(set){
+  selG = (allGroups.length && allGroups.every(g => set.has(g))) ? null : set;
+  persistG();
+  draw();
+}
+const gCount = () => selG ? allGroups.filter(g => selG.has(g)).length : allGroups.length;
+function gDesc(){
+  if(!selG) return '';
+  const a = allGroups.filter(g => selG.has(g));
+  if(!a.length) return ' · Grupos: nenhum';
+  return ` · Grupos: ${a.slice(0,6).join(', ')}${a.length>6 ? ` (+${a.length-6})` : ''}`;
+}
+
+/* Aplica o filtro de grupos numa NF. Se só parte dos itens entra, recalcula o valor. */
+function applyG(n){
+  if(!selG) return n;
+  const its = n.it.filter(x => selG.has(gName(x)));
+  if(!its.length) return null;
+  if(its.length === n.it.length) return n;
+  const s = k => its.reduce((a,x)=>a+x[k],0);
+  return Object.assign({}, n, {
+    it: its,
+    v: r2(s('vt') + s('ipi') + s('fr') - s('dc')),
+    dn: r2(s('dc')),
+    parcial: true
+  });
+}
 
 function build(rows){
   const h = rows[0].map(x=>x.trim());
@@ -519,7 +625,7 @@ function build(rows){
 
     const ch = g('ch');
     const o = {
-      key,
+      key, idx:nfs.length,
       cf: g('cf'),
       f:  g('f'),
       ped:g('ped'), nf:g('nf'), s:g('s'), em:g('em'),
@@ -528,6 +634,10 @@ function build(rows){
     };
     seen[key]=o; nfs.push(o);
   });
+
+  const gs = new Set();
+  nfs.forEach(n => n.it.forEach(x => gs.add(gName(x))));
+  allGroups = [...gs].sort((a,b)=>a.localeCompare(b,'pt-BR'));
 }
 
 function itemsHTML(n){
@@ -570,7 +680,6 @@ function itemsHTML(n){
 }
 
 function resumo(n){
-  const r2 = v => Math.round(v*100)/100;
   const s = k => n.it.reduce((a,x)=>a+x[k],0);
   const prod = r2(s('vt')), ipi = r2(s('ipi')), fr = r2(s('fr')), dn = r2(n.dn);
   const out = r2(n.v - (prod + ipi + fr - dn));
@@ -581,7 +690,7 @@ function resumo(n){
   if(out) L.push([out>0 ? '+ Outras despesas / itens fora do filtro' : '− Outros descontos / ajustes', out, out<0?'neg':'']);
   return `<div class="sum">
     ${L.map(x=>`<div><span>${x[0]}</span><b class="${x[2]}">${R(x[1])}</b></div>`).join('')}
-    <div class="tt"><span>= Total da nota</span><b>${R(n.v)}</b></div>
+    <div class="tt"><span>${n.parcial ? '= Total dos grupos selecionados' : '= Total da nota'}</span><b>${R(n.v)}</b></div>
   </div>`;
 }
 
@@ -620,12 +729,49 @@ function preset(p){
   draw();
 }
 
+/* =================== PAINEL DE GRUPOS =================== */
+function drawG(){
+  const btn = $('gb');
+  const on = !!selG;
+  const lbl = !on ? 'Todos' : (gCount() === 0 ? 'nenhum' : `${gCount()} de ${allGroups.length}`);
+  btn.textContent = `Grupos: ${lbl}${saveG ? ' 💾' : ''} ${$('gp').hidden ? '▾' : '▴'}`;
+  btn.classList.toggle('on', on);
+
+  if($('gp').hidden) return;
+
+  const d1 = $('d1').value, d2 = $('d2').value;
+  const cnt = {}, val = {};
+  nfs.forEach(n=>{
+    if((d1 && n.eni < d1) || (d2 && n.eni > d2)) return;
+    n.it.forEach(x=>{
+      const g = gName(x);
+      cnt[g] = (cnt[g]||0) + 1;
+      val[g] = (val[g]||0) + x.liq;
+    });
+  });
+
+  const q = $('gq').value.trim().toLowerCase();
+  gView = allGroups.filter(g => !q || g.toLowerCase().includes(q));
+
+  const box = $('gl'), sc = box.scrollTop;
+  box.innerHTML = gView.length ? gView.map((g,i)=>{
+    const c = cnt[g] || 0;
+    return `<label class="gi${c?'':' z'}">
+      <input type="checkbox" data-gi="${i}" ${(!selG || selG.has(g)) ? 'checked' : ''}>
+      <span class="gn">${esc(g)}</span>
+      <span class="gc">${c} it. · ${R(val[g]||0)}</span>
+    </label>`;
+  }).join('') : '<div class="gempty">Nenhum grupo encontrado.</div>';
+  box.scrollTop = sc;
+}
+
 /* =================== DRAW =================== */
 function draw(){
   const q  = $('q').value.trim().toLowerCase();
   const d1 = $('d1').value, d2 =$('d2').value;
 
-  const list = nfs.filter(n =>
+  const list = nfs.map(applyG).filter(n =>
+    n &&
     (!d1 || n.eni >= d1) &&
     (!d2 || n.eni <= d2) &&
     (!q  || n.f.toLowerCase().includes(q) || n.nf.includes(q) ||
@@ -636,6 +782,8 @@ function draw(){
   const periodo = (d1||d2) ? `${fmtIso(d1)||'início'} a ${fmtIso(d2)||'hoje'}` : 'Todo o período';
   const phTitle = $('phTitle');
 
+  drawG();
+
   if(groupMode === 'produto'){
     if(phTitle) phTitle.textContent = 'Total por produto';
     drawProduto(list, periodo, q);
@@ -644,6 +792,8 @@ function draw(){
     drawFornecedor(list, periodo);
   }
 }
+
+const kGrupos = () => selG ? [['Grupos filtrados', `${gCount()} de ${allGroups.length}`]] : [];
 
 /* -------- Modo FORNECEDOR -------- */
 function drawFornecedor(list, periodo){
@@ -662,13 +812,14 @@ function drawFornecedor(list, periodo){
 
   $('k').innerHTML = [
     ['Período (entrada)', periodo],
+    ...kGrupos(),
     ['Fornecedores', groups.length],
     ['Notas', list.length],
-    ['Total das NFs', R(tot)]
+    [selG ? 'Total (grupos filtrados)' : 'Total das NFs', R(tot)]
   ].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
 
   const ph = $('phMeta');
-  if(ph) ph.textContent = `Agrupado por fornecedor · Período: ${periodo} · ${groups.length} fornecedor(es) · ${list.length} nota(s) · Total ${R(tot)} · Impresso em ${new Date().toLocaleString('pt-BR')}`;
+  if(ph) ph.textContent = `Agrupado por fornecedor · Período: ${periodo}${gDesc()} · ${groups.length} fornecedor(es) · ${list.length} nota(s) · Total ${R(tot)} · Impresso em ${new Date().toLocaleString('pt-BR')}`;
 
   let h = '';
   groups.forEach((o,i)=>{
@@ -684,7 +835,7 @@ function drawFornecedor(list, periodo){
     </tr>`;
     if(op){
       o.l.slice().sort((a,b)=> b.eni.localeCompare(a.eni) || b.v - a.v).forEach(n=>{
-        const j = nfs.indexOf(n), no = openNF.has(n.key);
+        const j = n.idx, no = openNF.has(n.key);
         h += `<tr class="d" data-n="${j}">
           <td>
             <span class="a">${no?'▼':'▶'}</span>
@@ -693,6 +844,7 @@ function drawFornecedor(list, periodo){
             · Emissão ${esc(n.em)}
             · <b>Entrada ${esc(n.en)}</b>
             · ${n.it.length} it.
+            ${n.parcial ? '· <span class="gr-tag">só grupos filtrados</span>' : ''}
           </td>
           <td class="n" colspan="2">${R(n.v)} &nbsp; ${
             n.ch
@@ -705,7 +857,7 @@ function drawFornecedor(list, periodo){
       });
     }
   });
-  $('tb').innerHTML = h || '<tr><td colspan="3" style="color:#8a94a3">Nenhuma nota nesse período.</td></tr>';
+  $('tb').innerHTML = h || '<tr><td colspan="3" style="color:#8a94a3">Nenhuma nota nesse filtro.</td></tr>';
   $('tf').innerHTML = `<tr><td>TOTAL</td><td class="n">${list.length}</td><td class="n">${R(tot)}</td></tr>`;
 }
 
@@ -748,16 +900,17 @@ function drawProduto(list, periodo, q){
 
   $('k').innerHTML = [
     ['Período (entrada)', periodo],
+    ...kGrupos(),
     ['Produtos', groups.length],
     ['Fornecedores', nForns],
     ['Notas', usedNFs.size],
-    ['Total das NFs', R(totNFs)],
+    [selG ? 'Total (grupos filtrados)' : 'Total das NFs', R(totNFs)],
     ['Total dos produtos (líquido)', R(totLiq)],
     ['Ajustes (IPI / frete / desc.)', R(ajuste)]
   ].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
 
   const ph = $('phMeta');
-  if(ph) ph.textContent = `Agrupado por produto · Período: ${periodo} · ${groups.length} produto(s) · ${usedNFs.size} nota(s) · Total das NFs ${R(totNFs)} · Impresso em ${new Date().toLocaleString('pt-BR')}`;
+  if(ph) ph.textContent = `Agrupado por produto · Período: ${periodo}${gDesc()} · ${groups.length} produto(s) · ${usedNFs.size} nota(s) · Total das NFs ${R(totNFs)} · Impresso em ${new Date().toLocaleString('pt-BR')}`;
 
   let h = '';
   groups.forEach((o,i)=>{
@@ -799,7 +952,7 @@ function drawProduto(list, periodo, q){
     }
   });
 
-  $('tb').innerHTML = h || '<tr><td colspan="3" style="color:#8a94a3">Nenhum produto nesse período.</td></tr>';
+  $('tb').innerHTML = h || '<tr><td colspan="3" style="color:#8a94a3">Nenhum produto nesse filtro.</td></tr>';
 
   /* ---- Rodapé com reconciliação: produtos + ajustes = Total das NFs ---- */
   $('tf').innerHTML = `<tr><td colspan="3" style="border:0;padding:0">
@@ -936,7 +1089,35 @@ document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => {
   draw();
 });
 
+/* ---- Painel de grupos ---- */
+$('gb').onclick = () => {
+  const p = $('gp');
+  p.hidden = !p.hidden;
+  $('gb').setAttribute('aria-expanded', String(!p.hidden));
+  drawG();
+};
+$('gq').oninput = drawG;
+$('gl').onchange = e => {
+  const cb = e.target.closest('[data-gi]');
+  if(!cb) return;
+  const g = gView[+cb.dataset.gi];
+  const s = curG();
+  cb.checked ? s.add(g) : s.delete(g);
+  setSel(s);
+};
+$('gAll').onclick  = () => { const s = curG(); gView.forEach(g => s.add(g));    setSel(s); };
+$('gNone').onclick = () => { const s = curG(); gView.forEach(g => s.delete(g)); setSel(s); };
+$('gInv').onclick  = () => { const s = curG(); gView.forEach(g => s.has(g) ? s.delete(g) : s.add(g)); setSel(s); };
+$('gSave').onchange = e => {
+  saveG = e.target.checked;
+  persistG();
+  drawG();
+  toast(saveG ? 'Seleção de grupos salva neste navegador' : 'Seleção de grupos não será mais lembrada');
+};
+
 /* ---------- Boot ---------- */
+loadG();
+$('gSave').checked = saveG;
 document.querySelectorAll('[data-p]').forEach(b =>
   b.classList.toggle('on', b.dataset.p === DEFAULT_PRESET));
 document.querySelectorAll('[data-g]').forEach(b =>
