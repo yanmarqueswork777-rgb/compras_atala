@@ -640,7 +640,12 @@ function build(rows){
   const gs = new Set();
   gCode = {};
   nfs.forEach(n => n.it.forEach(x => { const k = gName(x); gs.add(k); if(x.cg && !gCode[k]) gCode[k] = x.cg; }));
-  allGroups = [...gs].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  allGroups = [...gs].sort((a,b)=>{
+    const ca = gCode[a] || '', cb = gCode[b] || '';
+    if(ca && !cb) return -1;          // grupos sem código vão para o fim
+    if(!ca && cb) return 1;
+    return ca.localeCompare(cb,'pt-BR',{numeric:true}) || a.localeCompare(b,'pt-BR');
+  });
 }
 
 function itemsHTML(n){
