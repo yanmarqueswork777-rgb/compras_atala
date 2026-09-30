@@ -324,102 +324,213 @@ table.ii tfoot td{
   .k{grid-template-columns:1fr 1fr}
 }
 
-/* ===== Impressão ===== */
+/* =====================================================================
+   IMPRESSÃO — layout de relatório corporativo
+   ===================================================================== */
 #printHeader{display:none}
+
+@page{
+  size:A4;
+  margin:14mm 12mm 16mm;
+  @bottom-left{
+    content:"Sol Colchões · Relatório de Compras";
+    font:8pt "Segoe UI",Arial,sans-serif; color:#666;
+  }
+  @bottom-right{
+    content:"Página " counter(page) " de " counter(pages);
+    font:8pt "Segoe UI",Arial,sans-serif; color:#666;
+  }
+}
+
 @media print{
+  :root{--pn:#1f3a5f; --pl:#e8edf4; --pz:#f6f8fb; --pb:#c9d1dc}
+
   html,body{
-    background:#fff !important;color:#000 !important;
-    padding:0 !important;margin:0 !important;font-size:11px;
+    background:#fff !important; color:#111 !important;
+    padding:0 !important; margin:0 !important;
+    font:10pt/1.35 "Segoe UI",Arial,Helvetica,sans-serif;
   }
   *{
     -webkit-print-color-adjust:exact !important;
     print-color-adjust:exact !important;
-    box-shadow:none !important;text-shadow:none !important;
+    box-shadow:none !important; text-shadow:none !important;
   }
   .box{max-width:none;margin:0}
-  h1{font-size:16px;color:#000;margin-bottom:2px}
-  .sub{color:#444;font-size:10px;margin-bottom:8px}
-
-  .card{
-    background:#fff !important;border:1px solid #bbb !important;
-    padding:6px 8px !important;margin-bottom:8px !important;
-    border-radius:4px;
-  }
-  .card h2{color:#000;font-size:10px}
-
-  .no-print{display:none !important}
-  input,button{display:none !important}
-
-  .k > div{background:#fff !important;border:1px solid #bbb !important;padding:6px 8px !important;border-radius:4px}
-  .k span{color:#444}
-  .k b{color:#000;font-size:13px}
-
-  #st{color:#444;font-size:10px}
-  #msg{display:none !important}
-
+  .no-print,input,button,#msg,#st{display:none !important}
+  .card{background:transparent !important;border:0 !important;padding:0 !important;margin:0 !important}
   .w{overflow:visible !important}
 
-  .tbl-main{border:1px solid #999}
-  .tbl-main th,.tbl-main td{
-    border-bottom:1px solid #ddd !important;
-    padding:4px 6px !important;
+  /* ---- Cabeçalho do relatório ---- */
+  #printHeader{display:block !important;margin-bottom:10px}
+  #printHeader .ph-top{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:2.5px solid var(--pn);padding-bottom:6px;
+  }
+  #printHeader .ph-brand{
+    font-size:15pt;font-weight:800;letter-spacing:.08em;color:var(--pn);
+  }
+  #printHeader .ph-brand small{
+    display:block;font-size:7.5pt;font-weight:600;letter-spacing:.12em;
+    color:#666;margin-top:1px;
+  }
+  #printHeader .ph-doc{text-align:right;font-size:8pt;color:#555;line-height:1.5}
+  #printHeader .ph-doc b{color:#111;font-size:8.5pt}
+  #printHeader h1{
+    font-size:14pt;margin:10px 0 8px;color:#111;font-weight:700;
+  }
+  #printHeader .ph-meta{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border:1px solid var(--pb);border-radius:3px;overflow:hidden;
+  }
+  #printHeader .ph-meta > div{
+    padding:5px 8px;border-right:1px solid var(--pb);border-bottom:1px solid var(--pb);
+    background:var(--pz);
+  }
+  #printHeader .ph-meta > div.wide{grid-column:span 2}
+  #printHeader .ph-meta > div.full{grid-column:1 / -1}
+  #printHeader .ph-meta span{
+    display:block;font-size:6.5pt;text-transform:uppercase;letter-spacing:.06em;
+    color:#666;font-weight:600;
+  }
+  #printHeader .ph-meta b{
+    display:block;font-size:9.5pt;color:#111;font-variant-numeric:tabular-nums;
+    margin-top:1px;
+  }
+  #printHeader .ph-meta > div.hl{background:var(--pn)}
+  #printHeader .ph-meta > div.hl span{color:#c8d4e6}
+  #printHeader .ph-meta > div.hl b{color:#fff;font-size:11pt}
+
+  /* KPIs da tela já estão no cabeçalho */
+  .k{display:none !important}
+
+  /* ---- Tabela principal ---- */
+  .tbl-main{width:100%;border-collapse:collapse;font-size:9.5pt}
+  .tbl-main thead{display:table-header-group}
+  .tbl-main tfoot{display:table-row-group}
+  .tbl-main th{
+    background:var(--pn) !important;color:#fff !important;
+    font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    padding:6px 8px !important;border:0 !important;
+  }
+  .tbl-main td{
+    padding:5px 8px !important;color:#111 !important;
+    border-bottom:1px solid #dde3ec !important;
     white-space:normal !important;
-    color:#000 !important;font-size:10.5px;
   }
-  .tbl-main th{background:#eee !important;color:#000 !important;font-size:10px;font-weight:700}
-  tr.f{cursor:default}
-  tr.f td{background:#fff !important;color:#000 !important}
-  tr.d td{background:#f7f7f7 !important;color:#000 !important;font-size:9.5px;padding-left:20px !important}
-  tr.sub td{background:#eee !important;color:#000 !important;border-top:1px solid #000 !important}
-  tr.rs > td{background:#fafafa !important;padding:2px 6px 6px 20px !important}
-  tr.it > td{background:#fafafa !important;padding:4px 6px 8px 20px !important}
-  tr.f,tr.d,tr.rs,tr.it,tr.sub{page-break-inside:avoid;break-inside:avoid}
+  .tbl-main td.n,.tbl-main th.n{text-align:right;white-space:nowrap !important}
 
-  .cf{background:#eee !important;color:#000 !important;border:1px solid #ccc !important}
-  .gr-tag{color:#444 !important}
+  .a{display:none !important}
 
-  .items{overflow:visible !important;border:1px solid #ccc !important;background:#fff !important}
-  table.ii{min-width:0 !important;width:100% !important;font-size:9px !important;display:table !important}
-  table.ii thead,table.ii tbody,table.ii tfoot,
-  table.ii tr,table.ii th,table.ii td{display:revert !important}
-  table.ii th,table.ii td{
-    padding:2px 4px !important;
-    border-bottom:1px solid #ddd !important;
-    color:#000 !important;
-    white-space:nowrap;
+  tr.f td{
+    background:var(--pl) !important;font-weight:700;
+    border-top:1px solid var(--pb) !important;
+    border-bottom:1px solid var(--pb) !important;
+    padding-top:6px !important;padding-bottom:6px !important;
   }
-  table.ii th{background:#eee !important;color:#000 !important;font-size:8.5px}
-  table.ii td.desc{white-space:normal;word-break:break-word;min-width:0}
-  table.ii td.n,table.ii th.n{text-align:right}
-  table.ii td::before,table.ii th::before{display:none !important}
-  table.ii tfoot td{border-top:1px solid #000 !important;background:#fafafa !important}
+  tr.f td:first-child{display:table-cell !important}
+  tr.f td:first-child .fname{font-size:10pt}
+  .cf{
+    background:#fff !important;color:var(--pn) !important;
+    border:1px solid var(--pn) !important;border-radius:3px;
+    font-size:7.5pt;padding:0 5px;margin-right:6px;font-weight:700;
+  }
+  .gr-tag{color:#555 !important;font-weight:400;font-size:8pt}
 
+  tr.d td{
+    background:#fff !important;font-size:8.5pt;color:#222 !important;
+    padding-left:22px !important;
+  }
+  tr.d td b{color:#000}
+  tr.sub td{
+    background:var(--pz) !important;color:#000 !important;
+    border-top:1.5px solid var(--pn) !important;font-weight:700;font-size:9pt;
+    padding-left:22px !important;
+  }
+  tr.rs > td{background:#fff !important;padding:2px 8px 8px 22px !important}
+  tr.it > td{background:#fff !important;padding:2px 8px 10px 22px !important}
+
+  tr.f,tr.d,tr.rs,tr.sub{break-inside:avoid;page-break-inside:avoid}
+  tr.f{break-after:avoid;page-break-after:avoid}
+
+  .tbl-main tfoot td{
+    background:var(--pn) !important;color:#fff !important;
+    font-weight:700;font-size:10pt;border:0 !important;
+    padding:7px 8px !important;
+  }
+
+  /* ---- Conciliação da NF ---- */
   .sum{
-    background:#fafafa !important;border:1px solid #ccc !important;
-    color:#000 !important;font-size:10px;max-width:400px;
+    margin:2px 0 0 auto !important;max-width:300px !important;
+    background:#fff !important;border:1px solid var(--pb) !important;
+    border-radius:3px;padding:3px 8px !important;font-size:8pt !important;
+    color:#111 !important;
   }
+  .sum div{padding:1px 0 !important}
   .sum span{color:#555 !important}
-  .sum b{color:#000 !important}
-  .sum b.neg{color:#a06000 !important}
-  .sum .tt span{color:#000 !important}
-  .sum .tt b{color:#000 !important}
+  .sum b{color:#111 !important}
+  .sum b.neg{color:#8a5a00 !important}
+  .sum .tt{border-top:1px solid #333 !important;margin-top:2px !important;padding-top:3px !important;font-size:8.5pt !important}
+  .sum .tt span,.sum .tt b{color:#000 !important;font-weight:700}
+  #tf .sum{max-width:340px !important;margin:8px 0 0 auto !important;font-size:9pt !important}
 
-  .tbl-main tfoot td{border-top:2px solid #000 !important;color:#000 !important}
-  .a{color:#000 !important}
-
-  #printHeader{display:block !important}
-  #printHeader h1{margin:0 0 2px}
-  #printHeader .meta{font-size:10px;color:#555;margin-bottom:8px}
+  /* ---- Tabela de itens ---- */
+  .items{
+    overflow:visible !important;border:1px solid var(--pb) !important;
+    border-radius:3px !important;background:#fff !important;
+  }
+  table.ii{
+    display:table !important;width:100% !important;min-width:0 !important;
+    font-size:7.5pt !important;border-collapse:collapse;
+  }
+  table.ii thead{display:table-header-group !important}
+  table.ii tbody{display:table-row-group !important}
+  table.ii tfoot{
+    display:table-row-group !important;background:transparent !important;
+    border:0 !important;padding:0 !important;margin:0 !important;border-radius:0 !important;
+  }
+  table.ii tr{display:table-row !important}
+  table.ii th,table.ii td{display:table-cell !important}
+  table.ii tbody tr,table.ii tfoot tr{
+    background:transparent !important;border:0 !important;border-radius:0 !important;
+    padding:0 !important;margin:0 !important;
+    break-inside:avoid;page-break-inside:avoid;
+  }
+  table.ii tbody tr:nth-child(even) td{background:var(--pz) !important}
+  table.ii th{
+    background:var(--pl) !important;color:#111 !important;
+    font-size:6.5pt !important;padding:3px 5px !important;
+    border-bottom:1px solid #999 !important;
+  }
+  table.ii td{
+    padding:2px 5px !important;color:#111 !important;
+    border:0 !important;border-bottom:1px solid #e3e7ee !important;
+    white-space:nowrap !important;font-weight:400 !important;
+    font-size:7.5pt !important;justify-content:initial !important;
+  }
+  table.ii td::before,table.ii th::before{display:none !important;content:none !important}
+  table.ii td.desc{
+    white-space:normal !important;word-break:break-word;min-width:0 !important;
+    border-bottom:1px solid #e3e7ee !important;margin:0 !important;
+    color:#111 !important;font-size:7.5pt !important;
+  }
+  table.ii td.n,table.ii th.n{text-align:right !important}
+  table.ii tfoot td{
+    background:var(--pl) !important;border-top:1px solid #555 !important;
+    border-bottom:0 !important;font-weight:700 !important;
+  }
 }
-@page{margin:10mm}
 </style>
 </head>
 <body>
 <div class="box">
 
   <div id="printHeader">
+    <div class="ph-top">
+      <div class="ph-brand">SOL COLCHÕES<small>SETOR FISCAL · COMPRAS</small></div>
+      <div class="ph-doc"><b>Relatório de Compras</b><br><span id="phDate"></span></div>
+    </div>
     <h1 id="phTitle">Total das notas por fornecedor</h1>
-    <div class="meta" id="phMeta"></div>
+    <div class="ph-meta" id="phMeta"></div>
   </div>
 
   <h1 class="no-print">Total das notas por fornecedor / produto</h1>
@@ -598,11 +709,31 @@ function setSel(set){
   draw();
 }
 const gCount = () => selG ? allGroups.filter(g => selG.has(g)).length : allGroups.length;
-function gDesc(){
-  if(!selG) return '';
+
+/* Texto dos grupos filtrados para o cabeçalho de impressão */
+function gTxt(){
+  if(!selG) return 'Todos os grupos';
+  const ap = activePreset();
   const a = allGroups.filter(g => selG.has(g)).map(g => gCode[g] ? `${gCode[g]} ${g}` : g);
-  if(!a.length) return ' · Grupos: nenhum';
-  return ` · Grupos: ${a.slice(0,6).join(', ')}${a.length>6 ? ` (+${a.length-6})` : ''}`;
+  if(!a.length) return 'Nenhum';
+  const lista = a.slice(0,8).join(', ') + (a.length>8 ? ` (+${a.length-8})` : '');
+  return ap ? `${ap} — ${lista}` : lista;
+}
+
+/* Monta o cabeçalho de impressão (grade de informações) */
+function setPrintMeta(agrup, periodo, cells, q){
+  const dt = new Date();
+  const pd = $('phDate');
+  if(pd) pd.textContent = 'Emitido em ' + dt.toLocaleDateString('pt-BR') + ' às ' +
+    dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  const c = (l,v,cls) => `<div class="${cls||''}"><span>${l}</span><b>${esc(v)}</b></div>`;
+  let h = c('Agrupamento', agrup) + c('Período (data de entrada)', periodo, 'wide');
+  cells.forEach(x => { h += c(x[0], x[1], x[2]); });
+  h += c('Grupos de produto', gTxt(), 'full');
+  if(q) h += c('Filtro de busca', q, 'full');
+  const ph = $('phMeta');
+  if(ph) ph.innerHTML = h;
 }
 
 /* Aplica o filtro de grupos numa NF. Se só parte dos itens entra, recalcula o valor. */
@@ -824,18 +955,18 @@ function draw(){
   drawG();
 
   if(groupMode === 'produto'){
-    if(phTitle) phTitle.textContent = 'Total por produto';
+    if(phTitle) phTitle.textContent = 'Compras consolidadas por produto';
     drawProduto(list, periodo, q);
   } else {
-    if(phTitle) phTitle.textContent = 'Total das notas por fornecedor';
-    drawFornecedor(list, periodo);
+    if(phTitle) phTitle.textContent = 'Compras consolidadas por fornecedor';
+    drawFornecedor(list, periodo, q);
   }
 }
 
 const kGrupos = () => selG ? [['Grupos filtrados', `${gCount()} de ${allGroups.length}`]] : [];
 
 /* -------- Modo FORNECEDOR -------- */
-function drawFornecedor(list, periodo){
+function drawFornecedor(list, periodo, q){
   const g = {};
   list.forEach(n=>{
     let o = g[n.f];
@@ -857,8 +988,11 @@ function drawFornecedor(list, periodo){
     [selG ? 'Total (grupos filtrados)' : 'Total das NFs', R(tot)]
   ].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
 
-  const ph = $('phMeta');
-  if(ph) ph.textContent = `Agrupado por fornecedor · Período: ${periodo}${gDesc()} · ${groups.length} fornecedor(es) · ${list.length} nota(s) · Total ${R(tot)} · Impresso em ${new Date().toLocaleString('pt-BR')}`;
+  setPrintMeta('Por fornecedor', periodo, [
+    ['Fornecedores', String(groups.length)],
+    ['Notas fiscais', String(list.length)],
+    [selG ? 'Total (grupos filtrados)' : 'Total das NFs', R(tot), 'hl wide']
+  ], q);
 
   let h = '';
   groups.forEach((o,i)=>{
@@ -888,7 +1022,7 @@ function drawFornecedor(list, periodo){
           <td class="n" colspan="2">${R(n.v)} &nbsp; ${
             n.ch
               ? `<button class="s" data-c="${j}">Copiar chave</button> <button class="s" data-m="${j}">Consultar no Meu DANFE</button>`
-              : '<span style="color:#8a94a3">sem chave</span>'
+              : '<span style="color:#8a94a3" class="no-print">sem chave</span>'
           }</td>
         </tr>`;
         h += `<tr class="rs"><td colspan="3">${resumo(n)}</td></tr>`;
@@ -897,7 +1031,7 @@ function drawFornecedor(list, periodo){
     }
   });
   $('tb').innerHTML = h || '<tr><td colspan="3" style="color:#8a94a3">Nenhuma nota nesse filtro.</td></tr>';
-  $('tf').innerHTML = `<tr><td>TOTAL</td><td class="n">${list.length}</td><td class="n">${R(tot)}</td></tr>`;
+  $('tf').innerHTML = `<tr><td>TOTAL GERAL</td><td class="n">${list.length}</td><td class="n">${R(tot)}</td></tr>`;
 }
 
 /* -------- Modo PRODUTO -------- */
@@ -948,8 +1082,14 @@ function drawProduto(list, periodo, q){
     ['Ajustes (IPI / frete / desc.)', R(ajuste)]
   ].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
 
-  const ph = $('phMeta');
-  if(ph) ph.textContent = `Agrupado por produto · Período: ${periodo}${gDesc()} · ${groups.length} produto(s) · ${usedNFs.size} nota(s) · Total das NFs ${R(totNFs)} · Impresso em ${new Date().toLocaleString('pt-BR')}`;
+  setPrintMeta('Por produto', periodo, [
+    ['Produtos', String(groups.length)],
+    ['Fornecedores', String(nForns)],
+    ['Notas fiscais', String(usedNFs.size)],
+    ['Total dos produtos (líquido)', R(totLiq)],
+    ['Ajustes (IPI / frete / desc.)', R(ajuste)],
+    [selG ? 'Total (grupos filtrados)' : 'Total das NFs', R(totNFs), 'hl']
+  ], q);
 
   let h = '';
   groups.forEach((o,i)=>{
@@ -1046,6 +1186,13 @@ function collapseAll(){
 }
 
 /* ---------- Impressão ---------- */
+/* Define a orientação da página: retrato p/ resumo, paisagem p/ detalhamento */
+function setPage(orient){
+  let s = $('pgs');
+  if(!s){ s = document.createElement('style'); s.id = 'pgs'; document.head.appendChild(s); }
+  s.textContent = `@page{size:A4 ${orient};margin:14mm 12mm 16mm}`;
+}
+
 function printMode(pmode){
   const savedOpen   = new Set(open);
   const savedOpenNF = new Set(openNF);
@@ -1060,10 +1207,12 @@ function printMode(pmode){
   setTimeout(restore, 60000); // fallback
 
   if(pmode === 'summary'){
+    setPage('portrait');
     open.clear(); openNF.clear();
     draw();
     setTimeout(()=>window.print(), 80);
   } else {
+    setPage('landscape');
     expandAll();
     setTimeout(()=>window.print(), 80);
   }
