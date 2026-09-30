@@ -455,6 +455,7 @@ table.ii tfoot td{
     </div>
 
     <div class="gp" id="gp" hidden>
+      <div class="r middle" id="gpre"><span class="seg-label">Predefinidos:</span></div>
       <div class="r middle">
         <input id="gq" placeholder="Buscar grupo ou código..." autocomplete="off">
         <button class="s" id="gAll" title="Marca os grupos visíveis na lista">Marcar</button>
@@ -495,6 +496,10 @@ const DEFAULT_PRESET = '30';      // hoje | 7 | 30 | mes | mesant | tudo
 const DEFAULT_GROUP = 'fornecedor'; // fornecedor | produto
 const GKEY = 'nfs.filtroGrupos.v1'; // chave do localStorage (grupos salvos)
 const SEM_GRUPO = '(Sem grupo)';
+/* Predefinidos de grupos (por Codigo_Grupo). Para criar outro, basta adicionar uma linha. */
+const GRUPO_PRESETS = {
+  'Matéria prima saca': ['1','2','3','4','7','8','10','11','12','13','15','16','31','40','41','53']
+};
 /* ==================== */
 
 const $ = i => document.getElementById(i);
@@ -564,6 +569,29 @@ function persistG(){
   }catch(e){}
 }
 const curG = () => new Set(selG || allGroups);
+const normCode = c => { c = String(c||'').trim(); return /^\d+$/.test(c) ? String(parseInt(c,10)) : c.toLowerCase(); };
+const presetNames = codes => {
+  const cs = new Set(codes.map(normCode));
+  return allGroups.filter(g => gCode[g] && cs.has(normCode(gCode[g])));
+};
+function activePreset(){
+  if(!selG) return '';
+  for(const [nome, codes] of Object.entries(GRUPO_PRESETS)){
+    const a = presetNames(codes);
+    if(a.length && a.length === selG.size && a.every(g => selG.has(g))) return nome;
+  }
+  return '';
+}
+function applyPreset(nome){
+  const codes = GRUPO_PRESETS[nome];
+  if(!codes) return;
+  const names = presetNames(codes);
+  if(!names.length){ toast('Nenhum grupo desse predefinido foi encontrado na planilha'); return; }
+  const found = new Set(names.map(g => normCode(gCode[g])));
+  const falta = codes.filter(c => !found.has(normCode(c)));
+  setSel(new Set(names));
+  toast(`${nome}: ${names.length} grupo(s)` + (falta.length ? ` · sem movimento/não achei: ${falta.join(', ')}` : ''));
+}
 function setSel(set){
   selG = (allGroups.length && allGroups.every(g => set.has(g))) ? null : set;
   persistG();
@@ -741,9 +769,11 @@ function preset(p){
 function drawG(){
   const btn = $('gb');
   const on = !!selG;
-  const lbl = !on ? 'Todos' : (gCount() === 0 ? 'nenhum' : `${gCount()} de ${allGroups.length}`);
+  const ap = activePreset();
+  const lbl = !on ? 'Todos' : ap ? ap : (gCount() === 0 ? 'nenhum' : `${gCount()} de ${allGroups.length}`);
   btn.textContent = `Grupos: ${lbl}${saveG ? ' 💾' : ''} ${$('gp').hidden ? '▾' : '▴'}`;
   btn.classList.toggle('on', on);
+  document.querySelectorAll('[data-pre]').forEach(b => b.classList.toggle('on', b.dataset.pre === ap));
 
   if($('gp').hidden) return;
 
@@ -1105,6 +1135,12 @@ $('gb').onclick = () => {
   $('gb').setAttribute('aria-expanded', String(!p.hidden));
   drawG();
 };
+Object.keys(GRUPO_PRESETS).forEach(nome => {
+  const b = document.createElement('button');
+  b.className = 's'; b.textContent = nome; b.dataset.pre = nome;
+  b.onclick = () => applyPreset(nome);
+  $('gpre').appendChild(b);
+});
 $('gq').oninput = drawG;
 $('gl').onchange = e => {
   const cb = e.target.closest('[data-gi]');
